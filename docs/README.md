@@ -102,7 +102,23 @@ Questa soluzione è buona ma non ideale perchè richiede di normalizzare la masc
 
 ## Strategie di Ricerca
 
-*(Approfondimento sull'uso di algoritmi come Negamax, Alpha-Beta pruning, Iterative Deepening, LMR, PVS e altre tecniche di pruning selettivo.)*
+### Zobrist Hash
+
+Zobrist Hashing è una tecnica utilizzata per rappresentare in modo efficiente le posizioni di gioco, associando a ciascuna configurazione un valore hash unico.  
+Ogni caratteristica del gioco, ovvero la posizione dei pezzi e il turno del giocatore, ha un valore hash casuale, e lo stato complessivo è ottenuto facendo lo XOR tra i valori delle caratteristiche.  
+Ogni mossa modifica poche delle caratteristiche della posizione e questo permette di aggiornare rapidamente l'hash quando cambia una parte della posizione, rendendo l'algoritmo veloce ed efficiente.
+
+Lo Zobrist Hashing utilizza valori di hash per rappresentare le posizioni di gioco.  
+La probabilità di collisione di due posizioni con lo stesso hash dipende dalla lunghezza dell'hash e dal numero di posizioni esplorate:
+
+$$
+P_{\text{collisione}} \approx 1 - \exp\left( -\frac{m^2}{2 \cdot 2^b} \right)
+$$
+
+- ( m = 240,000 ) è il numero di posizioni esplorate (ogni thread parallelo 1000 al secondo).
+- ( b = 64 ) è il numero di bit del valore hash.
+
+La probabilità di collisione è praticamente nulla, rendendo questo valore adeguato per garantire unicità nelle configurazioni di gioco.
 
 ## Valutazioni ed Euristiche
 
