@@ -36,11 +36,11 @@ L’idea è che se una mossa non è tra le prime valutate, è probabilmente meno
 
 ## Rappresentazione dello Spazio degli Stati
 
-L'intero stato di gioco è rappresentato in maniera compatta ed efficiente attraverso l'utilizzo di **bitboard**: una rappresentazione compatta di 81 bit per ciascun tipo di pezzo. 🧠
+L'intero stato di gioco è rappresentato in maniera compatta ed efficiente attraverso l'utilizzo di maschere dette **bitboard**: una rappresentazione compatta di 81 bit per ciascun tipo di pezzo. 🧠
 
 ```python
- 0   1   2   3   4   5   6   7   8
- 9  10  11  12  13  14  15  16  17
+00  01  02  03  04  05  06  07  08
+09  10  11  12  13  14  15  16  17
 18  19  20  21  22  23  24  25  26
 27  28  29  30  31  32  33  34  35
 36  37  38  39  40  41  42  43  44
@@ -65,28 +65,40 @@ Complessivamente sono utilizzati 244 bit per rappresentare una posizione. Questa
 
 La generazione delle mosse di un gioco su scacchiera modellato con **bitboard** è un processo complesso ma altamente ottimizzabile, e il nostro motore approfitta di questa possibilità.
 
-### Maschere di Movimento
+### Maschere di Sollitudine
 
-Inizialmente, si precomputano le **maschere di movimento**.  
+Inizialmente, si precomputano le **maschere di solitudine**.  
 Queste indicano le possibili mosse, specifiche per un pezzo di un preciso schieramento, che si muove da una precisa posizione.  
 **Non entrambi gli schieramenti possono occupare ogni casella**: è il caso degli accampamenti e del castello.  
-Ovviamente non ha senso pensare ad una maschera di movimento che indica i movimenti a partire da una casella che non si può raggiungere in primo luogo; il numero delle maschere di movimento è quindi (81 - 16) + (81 - 1) = 145.
+Ovviamente non ha senso pensare ad una maschera di solitudine che indica i movimenti a partire da una casella che non si può raggiungere in primo luogo; il numero delle maschere di movimento è quindi (81 - 16) + (81 - 1) = 145.
 
 ### Maschere d'Intralcio
 
-E' necessario considerare gli altri pezzi presenti sulla scacchiera, e per questo si utilizzano le maschere di intralcio.
+E' necessario considerare gli altri pezzi presenti sulla scacchiera, e per questo si utilizzano le **maschere d'intralcio**.
 Le maschere di intralcio sono bitboard di soli 16 bit, perchè ogni pezzo, al massimo, può essere capace di 16 mosse; e servono a indicare dove si trovano i pezzi che intralciano il movimento.
-E' quindi semplice calcolare la maschera delle mosse possibili.
+Anche le maschere di intralcio si possono precomputare; il numero di maschere di intralcio sembra essere 145 * 2^16 = 9.502.720, mentre in realtà la presenza di molte caselle vietate limita il numero di maschere di intralcio a 1161600, dal momento che no considero d'intralcio i pezzi sulla stessa riga o colonna, ma che si trovano su una casella non prevista dalla maschera di soliitudine.
+
+### Pezzi Scorrevoli
+
+I pezzi di tablut si dicono pezzi scorrevoli, come anche lo sono regina, torre, ed alfiere a schacchi; diversamente dai pezzi della dama.  
+Se non si presta attenzione si richia di far saltare i pezzi oltre gli ostacoli, e non sarebbe corretto:
 
 ```python
-moves = moveMask & ~snagMask;
+allowed_moves_bitboard = loneliness_bitboard & ~snag_bitboard # The pieces are not equipped with Red Bull
 ```
 
-Da notare che anche le maschere di intralcio di possono precomputare; il numero di maschere di intralcio è 145 * 2^16 = 9.502.720
+### Mosse Lette
 
-### Maschere Magiche
+Si deve evitare di considerare una mossa per volta con un ciclo in ogni direzione!
+Di conseguenza le mosse non sono davvero generate durante la partita ma sono in realtà semplicemente lette.
+Per ogni schieramento e per ogni posizione sono previste tutte maschere d'intralcio possibili.
+L'indice utilizzato per accedere alla struttura è molto compatto:
 
+```python
+(color << 23) | (position << 16) | snag_mask
+```
 
+Questa soluzione è buona ma non ideale perchè richiede di normalizzare la maschera d'intralcio da 81 a 16 bit.
 
 ## Strategie di Ricerca
 

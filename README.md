@@ -18,13 +18,13 @@
 ## Regole
 
 Per una descrizione dettagliata delle regole, si fa riferimento alle regole di *Ashton*, adottate in questo progetto.  
-Nella sezione [regole](regole) puoi esplorare i dettagli completi delle meccaniche di gioco.
+Nella sezione [regole](rules) puoi esplorare i dettagli completi delle meccaniche di gioco.
 
 ## Documentazione
 
 Il progetto *RedBluT* nasce come un motore di AI dedicato a un gioco di strategia a scacchiera: Tablut.  
 La nostra creazine si basa su molte tra le più note strategie di nell'ambito della ricerca nello spazio degli stati.  
-Nella sezione [documentazione](documentazione) è possibile esplorare in dettaglio le scelte progettuali, le tecnologie implementative e le sfide affrontate durante lo sviluppo.
+Nella sezione [documentazione](docs) è possibile esplorare in dettaglio le scelte progettuali, le tecnologie implementative e le sfide affrontate durante lo sviluppo.
 
 ## Risultati
 
