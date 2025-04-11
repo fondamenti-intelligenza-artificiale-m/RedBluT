@@ -1,8 +1,8 @@
 import os
 
-from utils import bitboard_to_string
+from utils.utils import bitboard_to_string
 
-def generate_snag_bitboards(loneliness_mask):
+def generate_snag_bitboards(loneliness_mask: int) -> int:
     bitboards = []
     valid_positions = [i for i in range(81) if (loneliness_mask & (1 << i)) != 0]
     num_combinations = 2 ** len(valid_positions)
@@ -16,7 +16,7 @@ def generate_snag_bitboards(loneliness_mask):
         bitboards.append((i, bitboard))
     return bitboards
 
-def main():
+def main() -> None:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     input_path = os.path.join(script_dir, '..', 'processed', 'loneliness.txt')
     with open(input_path, 'r') as f:
@@ -24,12 +24,11 @@ def main():
     output_path = os.path.join(script_dir, '..', 'processed', 'snag.txt')
     with open(output_path, 'w') as f:
         for line in loneliness_lines:
-            bitboard_str = line.split(":")[1].strip()
-            loneliness_mask = int(bitboard_str, 2)
-            snag_bitboards = generate_snag_bitboards(loneliness_mask)
+            loneliness_bitboard = int(line.split(":")[1].strip(), 2)
+            snag_bitboards = generate_snag_bitboards(loneliness_bitboard)
             f.write(f"{line}")
             for snag, bitboard in snag_bitboards:
-                f.write(f"{snag:05d}: {bitboard_to_string(bitboard, True)}\n")
+                f.write(f"{snag:05d}: {bitboard_to_string(bitboard)}\n")
 
 if __name__ == "__main__":
     main()
