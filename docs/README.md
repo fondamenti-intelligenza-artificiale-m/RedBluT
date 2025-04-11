@@ -65,7 +65,7 @@ Complessivamente sono utilizzati 244 bit per rappresentare una posizione. Questa
 
 La generazione delle mosse di un gioco su scacchiera modellato con **bitboard** è un processo complesso ma altamente ottimizzabile, e il nostro motore approfitta di questa possibilità.
 
-### Maschere di Sollitudine
+### Maschere di Solitudine
 
 Inizialmente, si precomputano le **maschere di solitudine**.  
 Queste indicano le possibili mosse, specifiche per un pezzo di un preciso schieramento, che si muove da una precisa posizione.  
@@ -102,11 +102,18 @@ Questa soluzione è buona ma non ideale perchè richiede di normalizzare la masc
 
 ## Strategie di Ricerca
 
+## Tabella delle Transposizioni
+
+Lo spazio degli stati è un grafo dal momento che posizioni identiche si possono raggiungere con un diversa serie di mosse.  
+La Tabella delle Trasposizioni permette di trattare lo spazio degli stati come un albero.  
+Si memorizzano nella Tabella le informazioni relative alle posizioni già esplorate di modo da non doverle ricalcolare.
+
 ### Zobrist Hash
 
-Zobrist Hashing è una tecnica utilizzata per rappresentare in modo efficiente le posizioni di gioco, associando a ciascuna configurazione un valore hash unico.  
-Ogni caratteristica del gioco, ovvero la posizione dei pezzi e il turno del giocatore, ha un valore hash casuale, e lo stato complessivo è ottenuto facendo lo XOR tra i valori delle caratteristiche.  
-Ogni mossa modifica poche delle caratteristiche della posizione e questo permette di aggiornare rapidamente l'hash quando cambia una parte della posizione, rendendo l'algoritmo veloce ed efficiente.
+Lo Zobrist Hash è una tecnica utilizzata per rappresentare in modo efficiente le posizioni di gioco, associando a ciascuna configurazione un valore hash unico, che è utilizzato come chiave della Tabella delle Transposizioni.  
+Ogni caratteristica del gioco, ha un valore hash casuale, e lo stato complessivo è ottenuto facendo lo XOR tra i valori delle caratteristiche. 
+Ogni caratteristica è espressa nella forma: un pezzo di un certo schieramento si trova in una certa casella. C'è un altra caratteristica particolare che indica che tocca al bianco muovere.
+Ogni mossa modifica poche delle caratteristiche della posizione e questo permette di aggiornare rapidamente l'hash quando cambia una parte della posizione, rendendo il calcolo dell'hash veloce ed efficiente.
 
 Lo Zobrist Hashing utilizza valori di hash per rappresentare le posizioni di gioco.  
 La probabilità di collisione di due posizioni con lo stesso hash dipende dalla lunghezza dell'hash e dal numero di posizioni esplorate:
@@ -119,6 +126,16 @@ $$
 - ( b = 64 ) è il numero di bit del valore hash.
 
 La probabilità di collisione è praticamente nulla, rendendo questo valore adeguato per garantire unicità nelle configurazioni di gioco.
+
+## Ricerca Iterativa in Profondità
+
+La Ricerca Iterativa in Profondità è una tecnica di ricerca che combina i benefici della ricerca in profondità e della ricerca a larghezza, esplorando l'albero di ricerca con profondità crescente.
+
+Questo approccio permette di esplorare progressivamente più in profondità mentre mantiene la possibilità di interrompere la ricerca in qualsiasi momento, con un risultato parziale. Inoltre, l'iterative deepening favorisce il riutilizzo delle informazioni (come la best move nella TT) e migliora l'efficienza complessiva grazie a potature più rapide e un move ordering più efficace.
+
+## Negamax
+
+## Aspiration Window
 
 ## Valutazioni ed Euristiche
 
