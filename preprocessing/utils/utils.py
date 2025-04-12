@@ -22,7 +22,7 @@ def bitboard_to_string(mask: int, inline: bool = True) -> str:
         return bitboard_str
     else:
         lines = [bitboard_str[row * 9:(row + 1) * 9][::-1] for row in range(9)][::-1]
-        return "\n" + "\n".join(lines)
+        return '\n' + '\n'.join(lines)
 
 def bitboard_to_exponents(bitboard: int) -> set[int]:
     exponents = set()

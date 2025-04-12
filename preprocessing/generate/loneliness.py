@@ -29,7 +29,7 @@ def main() -> None:
     output_path = os.path.join(script_dir, '..', 'processed', 'loneliness.txt')
     with open(output_path, 'w') as f:
         for side, index, bitboard in loneliness_bitboards:
-            f.write(f"{side}-{index:02d}: {bitboard_to_string(bitboard)}\n")
+            f.write(f'{side}-{index:02d}: {bitboard_to_string(bitboard)}\n')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

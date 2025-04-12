@@ -24,11 +24,11 @@ def main() -> None:
     output_path = os.path.join(script_dir, '..', 'processed', 'snag.txt')
     with open(output_path, 'w') as f:
         for line in loneliness_lines:
-            loneliness_bitboard = int(line.split(":")[1].strip(), 2)
+            loneliness_bitboard = int(line.split(':')[1].strip(), 2)
             snag_bitboards = generate_snag_bitboards(loneliness_bitboard)
-            f.write(f"{line}")
+            f.write(f'{line}')
             for snag, bitboard in snag_bitboards:
-                f.write(f"{snag:05d}: {bitboard_to_string(bitboard)}\n")
+                f.write(f'{snag:05d}: {bitboard_to_string(bitboard)}\n')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

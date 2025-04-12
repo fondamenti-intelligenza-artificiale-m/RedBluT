@@ -14,13 +14,13 @@ def main() -> None:
         for line in snag_lines:
             if '-' in line:
                 color = 0 if 'W' in line else 1
-                position = int(line.split("-")[1].split(":")[0], 10)
+                position = int(line.split('-')[1].split(':')[0], 10)
             else:
-                snag_mask_16 = int(line.split(":")[0], 10)
-                snag_mask_81 = int(line.split(":")[1], 2)
+                snag_mask_16 = int(line.split(':')[0], 10)
+                snag_mask_81 = int(line.split(':')[1], 2)
                 if color == 0:
                     move_bitboard = generate_bitboard(position, bitboard_to_exponents(snag_mask_81) | CASTLE | NORD_CAMP | WEST_CAMP | EST_CAMP | SOUTH_CAMP)
-                    f.write(f"{generate_key(color, position, snag_mask_16):08d}: {bitboard_to_string(move_bitboard)}\n")
+                    f.write(f'{generate_key(color, position, snag_mask_16):08d}: {bitboard_to_string(move_bitboard)}\n')
                 elif color == 1:
                     if position in NORD_CAMP:
                         move_bitboard = generate_bitboard(position, bitboard_to_exponents(snag_mask_81) | CASTLE | SOUTH_CAMP)
@@ -32,7 +32,7 @@ def main() -> None:
                         move_bitboard = generate_bitboard(position, bitboard_to_exponents(snag_mask_81) | CASTLE | NORD_CAMP)
                     else:
                         move_bitboard = generate_bitboard(position, bitboard_to_exponents(snag_mask_81) | CASTLE | NORD_CAMP | WEST_CAMP | EST_CAMP | SOUTH_CAMP)
-                    f.write(f"{generate_key(color, position, snag_mask_16):08d}: {bitboard_to_string(move_bitboard)}\n")
+                    f.write(f'{generate_key(color, position, snag_mask_16):08d}: {bitboard_to_string(move_bitboard)}\n')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
