@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-os.makedirs(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'processed')), exist_ok=True)
+os.makedirs(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'computed')), exist_ok=True)
 
 def generate(module_name):
     result = subprocess.run(['python', '-m', f'generate.{module_name}'])

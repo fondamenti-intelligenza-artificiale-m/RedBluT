@@ -4,10 +4,10 @@ from utils.utils import *
 
 def main() -> None:
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    input_path = os.path.join(script_dir, '..', 'processed', 'snag.txt')
+    input_path = os.path.join(script_dir, '..', 'computed', 'snag.txt')
     with open(input_path, 'r') as f:
         snag_lines = f.readlines()
-    output_path = os.path.join(script_dir, '..', 'processed', 'move.txt')
+    output_path = os.path.join(script_dir, '..', 'computed', 'move.txt')
     with open(output_path, 'w') as f:
         color = None
         position = None

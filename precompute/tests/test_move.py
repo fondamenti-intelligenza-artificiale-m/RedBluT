@@ -7,7 +7,7 @@ from utils.utils import *
 
 def get_input_path() -> str:
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(script_dir, '..', 'processed', 'move.txt')
+    return os.path.join(script_dir, '..', 'computed', 'move.txt')
 
 def get_value(key: int) -> str:
     with open(get_input_path(), 'r') as f:

@@ -26,7 +26,7 @@ def generate_all_loneliness_bitboards() -> list[tuple[str, int, int]]:
 def main() -> None:
     loneliness_bitboards = generate_all_loneliness_bitboards()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_path = os.path.join(script_dir, '..', 'processed', 'loneliness.txt')
+    output_path = os.path.join(script_dir, '..', 'computed', 'loneliness.txt')
     with open(output_path, 'w') as f:
         for side, index, bitboard in loneliness_bitboards:
             f.write(f'{side}-{index:02d}: {bitboard_to_string(bitboard)}\n')
