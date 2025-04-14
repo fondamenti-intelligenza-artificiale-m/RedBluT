@@ -1,38 +1,38 @@
-# RedBluT *(Ti mette l'AI)*
+# RedBluT *(Ti Mette l'AI)*
 
-## 📚 Indice
+## 📚 Table of Contents
 
-1. [🧬 Etimologia](#etimologia) 
-2. [📖 Regole](#regole) 
-3. [📑 Documentazione](#documentazione)
-4. [📊 Risultati](#risultati)
-5. [🤝 Autori](#autori)
+1. [🧬 Etymology](#etymology)  
+2. [📖 Rules](#rules)  
+3. [📑 Documentation](#documentation)  
+4. [📊 Results](#results)  
+5. [🤝 Authors](#authors)
 
-## Etimologia
+## Etymology
 
-- 🎓 Bologna – I colori della città (e della sua squadra) sono il rosso e il blu.  
-- 🛡️ Tablut – Un antico gioco da tavolo vichingo, capace di dare vita a posizioni complesse e interessanti.  
-- 🤖 AI – Il cuore del progetto è un'AI progettata per la competizione con avversari della stessa natura.  
-- 🥤 Red Bull – Francamente dovremmo usarne meno...
+- 🎓 Bologna – The city's (and its football team's) colors are red and blue.  
+- 🛡️ Tablut – An ancient Viking board game, known for its deep and complex positions.  
+- 🤖 AI – At the heart of the project is an AI designed to compete with similarly intelligent opponents.  
+- 🥤 Red Bull – Honestly, we should probably cut back...
 
-## Regole
+## Rules
 
-Per una descrizione dettagliata delle regole, si fa riferimento alle regole di *Ashton*, adottate in questo progetto.  
-Nella sezione [regole](rules) puoi esplorare i dettagli completi delle meccaniche di gioco.
+For a detailed rule set, we refer to the *Ashton* rules, which this project is based on.  
+In the [rules](rules) section you can explore the complete mechanics of the game.
 
-## Documentazione
+## Documentation
 
-Il progetto *RedBluT* nasce come un motore di AI dedicato a un gioco di strategia a scacchiera: Tablut.  
-La nostra creazine si basa su molte tra le più note strategie di nell'ambito della ricerca nello spazio degli stati.  
-Nella sezione [documentazione](docs) è possibile esplorare in dettaglio le scelte progettuali, le tecnologie implementative e le sfide affrontate durante lo sviluppo.
+*RedBluT* is an AI engine designed for a strategic board game: Tablut.  
+Our creation builds upon several well-known techniques in the field of state-space search.  
+In the [documentation](docs) section, you’ll find a detailed breakdown of our design choices, implementation strategies, and development challenges.
 
-## Risultati
+## Results
 
-Alla fine del corso vedremo...
+We'll see how things turn out by the end of the course...
 
-## Autori
+## Authors
 
 - [@Pietro Bertozzi](https://github.com/BertozziPietro)  
 - [@Stefano Casini](https://github.com/StefanoCasini)  
 - [@Luca Procaccini](https://github.com/LucaProcaccini)  
-- [@Francesco Taccetti](https://github.com/Tacce)
+- [@Francesco Taccetti](https://github.com/Tacce)  

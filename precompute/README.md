@@ -2,7 +2,7 @@
 
 This project contains the generation system, tests, and utility code for the precomputation of tables used in the Tablut game engine.
 
-## 📚 Index 
+## 📚 Table of Contents 
 
 - 📌 [What It Does](#what-it-does)
 - ⚙️ [How It Works](#how-it-works)

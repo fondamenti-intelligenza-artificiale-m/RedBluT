@@ -1,42 +1,38 @@
-# Documentazione di *RedBluT*
+# *RedBluT* Documentation
 
-Questa documentazione raccoglie e approfondisce tutti gli aspetti tecnici e progettuali del motore di gioco *RedBluT*, spiegando le scelte implementative e le tecnologie.  
-È pensata sia come riferimento che come guida per chi vuole comprendere il funzionamento interno del sistema o alcuni suoi dettagli.
+This documentation outlines the technical and design aspects of the *RedBluT* game engine, explaining key implementation choices and technologies. It serves both as a reference and a guide for anyone interested in understanding the system's inner workings.
 
-## 📚 Indice
+## 📚 Table of Contents
 
-- [🧩 Architettura del Sistema](#architettura-del-sistema)
-- [🧵 Utilizzo del Parallelismo](#utilizzo-del-parallelismo)
-- [🧠 Rappresentazione dello Spazio degli Stati](#rappresentazione-dello-spazio-degli-stati)
-- [🎯 Generazione delle Mosse](#generazione-delle-mosse)
-- [🔍 Strategie di Ricerca](#strategie-di-ricerca)
-- [⚖️ Valutazioni ed Euristiche](#valutazioni-ed-euristiche)
+- [🧵 Use of Parallelism](#use-of-parallelism)  
+- [🧠 State Space Representation](#state-space-representation)  
+- [🎯 Move Generation](#move-generation)  
+- [🔍 Search Strategies](#search-strategies)  
+- [⚖️ Evaluation and Heuristics](#evaluation-and-heuristics)
 
-
-## Architettura del Sistema
-
-Il motore *RedBluT* sfrutta un'architettura **SMP (Symmetric MultiProcessing)** per massimizzare l'efficienza nella ricerca delle mosse in ambienti multi-core.
-
-## Utilizzo del Parallelismo
+## Use of Parallelism
 
 ### Lazy SMP (Lazy Symmetric MultiProcessing)
 
-E' stato adottato un modello noto come **Lazy SMP**, che permette ai thread di lavorare in modo indipendente su diverse parti dell'albero delle mosse, condividendo una [transposition table centrale](#trasnsposition-table).
+The engine adopts a model known as **Lazy SMP**, which allows threads to work independently on different parts of the move tree, while sharing a central transposition table.
 
-Nella configurazione attuale, con **4 core disponibili**, i thread sono assegnati come segue:  
-- 🕒 **1 thread** è dedicato esclusivamente alla gestione del tempo.  
-    Esso segnala quando la ricerca deve interrompersi per consegnare una [mossa valida](#mossa-valida) entro il tempo limite.
-- 🚀 **3 thread** si occupano della ricerca vera e propria.  
-    Lavorando ciascuno su una tra le **prime tre mosse** ordinate secondo la [funzione euristica](#euristica).
+In the current configuration, with **4 available cores**, threads are assigned as follows:  
+- 🕒 **1 thread** is dedicated exclusively to time management.  
+    It signals when the search must stop in order to return a valid move within the time limit.  
+- 🚀 **3 threads** handle the actual search process.  
+    Each one works on one of the **top three moves**, ordered according to the heuristic function.
 
 ### LMR (Late Move Reductions)
 
-A partire dalla **quarta mossa** in ordine euristico, entra in gioco la tecnica chiamata **Late Move Reductions (LMR)** 😴: questa tecnica riduce la profondità di ricerca per le mosse considerate meno promettenti (cioè quelle che appaiono più tardi nella lista ordinata).  
-L’idea è che se una mossa non è tra le prime valutate, è probabilmente meno interessante, e quindi può essere esplorata con una profondità minore e, solo se essa supera comunque un certo valore soglia, detto fail-high 📈, verrà riesaminata a piena profondità.
+Starting from the **fourth move** in heuristic order, the technique called **Late Move Reductions (LMR)** 😴 is applied.  
+It reduces the search depth for moves considered less promising (i.e., those appearing later in the sorted list).  
+The idea is that if a move is not among the first considered, it is probably less interesting, and can be explored at a reduced depth.  
+Only if it still returns a value above a certain threshold, known as **fail-high** 📈, will it be re-searched at full depth.
 
-## Rappresentazione dello Spazio degli Stati
+## State Space Representation
 
-L'intero stato di gioco è rappresentato in maniera compatta ed efficiente attraverso l'utilizzo di maschere dette **bitboard**: una rappresentazione compatta di 81 bit per ciascun tipo di pezzo. 🧠
+The entire game state is represented in a compact and efficient way using **bitboards**, a 81-bit bitboard for each piece type. 🧠  
+Each index corresponds to a square on the 9x9 board, and holds a 0 if the piece is absent, 1 if present.
 
 ```python
 00  01  02  03  04  05  06  07  08
@@ -50,93 +46,117 @@ L'intero stato di gioco è rappresentato in maniera compatta ed efficiente attra
 72  73  74  75  76  77  78  79  80
 ```
 
-Ogni indice rappresenta una casella sulla scacchiera 9x9 e assume `0` se il cavaliere è assente, `1` se è presente.
+Specifically, the state structure includes:
 
-Nel dettaglio, la struttura dello stato comprende:
-- 🟤⚪ **2 Bitboard principali** - rispettivamente per i per cavalieri neri e per i cavalieri bianchi.
-- 👑 **Bitboard del re** – con un singolo bit attivo, perchè c'è sempre e solo un re.
-- 🔄 **Bit di turno** – che indica a quale giocatore tocca muovere.
-    - `0` -> bianchi.
-    - `1` -> neri.
+- 🟤⚪ Two main bitboards – one for black pieces, one for white pieces.
+- 👑 King bitboard – with a single active bit, since there is always exactly one king.
+- 🔄 Turn bit – indicates which player is to move: `0` → white, `1` → black
 
-Complessivamente sono utilizzati 244 bit per rappresentare una posizione. Questa rappresentazione è facilmente manipolabile da un motore di gioco ottimizzato: le operazioni bitwise permettono una gestione rapida delle mosse, dei controlli e delle interazioni tra pezzi.
+In total, 244 bits are used to represent a position.  
+This representation is highly efficient because bitwise operations allow for fast move generation, threat detection, and piece interactions.
 
-## Generazione delle Mosse
+## Move Generation
 
-La generazione delle mosse di un gioco su scacchiera modellato con **bitboard** è un processo complesso ma altamente ottimizzabile, e il nostro motore approfitta di questa possibilità.
+Move generation in a board game modeled with **bitboards** can be a complex yet highly optimizable process.  
+A [dedicated subproject](../precompute) describes the details of the **move precomputation** process.
 
-### Maschere di Solitudine
+### Loneliness Bitboard
 
-Inizialmente, si precomputano le **maschere di solitudine**.  
-Queste indicano le possibili mosse, specifiche per un pezzo di un preciso schieramento, che si muove da una precisa posizione.  
-**Non entrambi gli schieramenti possono occupare ogni casella**: è il caso degli accampamenti e del castello.  
-Ovviamente non ha senso pensare ad una maschera di solitudine che indica i movimenti a partire da una casella che non si può raggiungere in primo luogo; il numero delle maschere di movimento è quindi (81 - 16) + (81 - 1) = 145.
+At initialization, we precompute **loneliness bitboard**.  
+These bitboard define all possible moves for a piece of a specific side starting from a specific square.  
+**Not all squares can be occupied by both sides**; for instance, camps and the central castle are restricted.  
+Naturally, it makes no sense to generate a loneliness bitboard from a square that is unreachable for that side.  
+Thus, the total number of movement bitboard is:  
+(81 - 16) + (81 - 1) = **145**.
 
-### Maschere d'Intralcio
+### Snag Bitboard
 
-E' necessario considerare gli altri pezzi presenti sulla scacchiera, e per questo si utilizzano le **maschere d'intralcio**.
-Le maschere di intralcio sono bitboard di soli 16 bit, perchè ogni pezzo, al massimo, può essere capace di 16 mosse; e servono a indicare dove si trovano i pezzi che intralciano il movimento.
-Anche le maschere di intralcio si possono precomputare; il numero di maschere di intralcio sembra essere 145 * 2^16 = 9.502.720, mentre in realtà la presenza di molte caselle vietate limita il numero di maschere di intralcio a 1161600, dal momento che no considero d'intralcio i pezzi sulla stessa riga o colonna, ma che si trovano su una casella non prevista dalla maschera di soliitudine.
+Other pieces on the board may block movement. For this reason, we use **snag bitboard**, small 16-bit bitboards indicating potential obstacles.  
+Each piece can have at most 16 legal moves, so the snag bitboard only needs to represent 16 bits.  
+These bitboard are also **precomputed**.
 
-### Pezzi Scorrevoli
+While in theory there could be 145 × 2¹⁶ = 9,502,720 possible combinations, the actual number is lower, **1,161,600**, thanks to forbidden squares.  
+We do not consider pieces as snags if they are aligned on the same row or column but placed on a square not reachable in the corresponding loneliness bitboard.
 
-I pezzi di tablut si dicono pezzi scorrevoli, come anche lo sono regina, torre, ed alfiere a schacchi; diversamente dai pezzi della dama.  
-Se non si presta attenzione si richia di far saltare i pezzi oltre gli ostacoli, e non sarebbe corretto:
+### Sliding Pieces
 
-```python
-allowed_moves_bitboard = loneliness_bitboard & ~snag_bitboard # The pieces are not equipped with Red Bull
-```
-
-### Mosse Lette
-
-Si deve evitare di considerare una mossa per volta con un ciclo in ogni direzione!
-Di conseguenza le mosse non sono davvero generate durante la partita ma sono in realtà semplicemente lette.
-Per ogni schieramento e per ogni posizione sono previste tutte maschere d'intralcio possibili.
-L'indice utilizzato per accedere alla struttura è molto compatto:
+Tablut pieces are **sliding pieces**, like queens, rooks, and bishops in chess, as opposed to draughts/checkers pieces.  
+If not handled properly, a move might incorrectly “jump” over other pieces:
 
 ```python
-(color << 23) | (position << 16) | snag_mask
+moves_bitboard = loneliness_bitboard & ~snag_bitboard  # Mistake: unfortunately, the pieces are not equipped with Red Bull
 ```
 
-Questa soluzione è buona ma non ideale perchè richiede di normalizzare la maschera d'intralcio da 81 a 16 bit.
+### Move Lookup
 
-## Strategie di Ricerca
+We avoid computing legal moves one by one in every direction during gameplay.
+Instead, moves are not generated, they are simply looked up.
+For each side and each board position, all valid snag bitboard are precomputed.
+A very compact index is used to access the lookup table:
 
-## Tabella delle Transposizioni
+```python
+(color << 23) | (position << 16) | snag_bitboard
+```
 
-Lo spazio degli stati è un grafo dal momento che posizioni identiche si possono raggiungere con un diversa serie di mosse.  
-La Tabella delle Trasposizioni permette di trattare lo spazio degli stati come un albero.  
-Si memorizzano nella Tabella le informazioni relative alle posizioni già esplorate di modo da non doverle ricalcolare.
+## Search Strategies
 
-### Zobrist Hash
+This section describes the techniques used to explore the move tree efficiently, combining classic pruning strategies with advanced optimizations inspired by modern engines.
 
-Lo Zobrist Hash è una tecnica utilizzata per rappresentare in modo efficiente le posizioni di gioco, associando a ciascuna configurazione un valore hash unico, che è utilizzato come chiave della Tabella delle Transposizioni.  
-Ogni caratteristica del gioco, ha un valore hash casuale, e lo stato complessivo è ottenuto facendo lo XOR tra i valori delle caratteristiche. 
-Ogni caratteristica è espressa nella forma: un pezzo di un certo schieramento si trova in una certa casella. C'è un altra caratteristica particolare che indica che tocca al bianco muovere.
-Ogni mossa modifica poche delle caratteristiche della posizione e questo permette di aggiornare rapidamente l'hash quando cambia una parte della posizione, rendendo il calcolo dell'hash veloce ed efficiente.
+### Iterative Deepening
 
-Lo Zobrist Hashing utilizza valori di hash per rappresentare le posizioni di gioco.  
-La probabilità di collisione di due posizioni con lo stesso hash dipende dalla lunghezza dell'hash e dal numero di posizioni esplorate:
+The engine performs **Iterative Deepening Depth-First Search** to progressively deepen the search level, starting from shallow depths and reusing previous results to guide deeper iterations.  
+This allows the use of early cutoffs, better move ordering, and timely interruption handling.
+
+### Negamax
+
+At the core of the search logic lies the **Negamax algorithm**, a simplified variant of Minimax that leverages the symmetry of zero-sum games.  
+Rather than distinguishing between maximizing and minimizing players, Negamax assumes both players try to maximize their own score, and simply **negates the evaluation** when switching turns.
+
+To improve efficiency, the algorithm is combined with **Alpha-Beta pruning**, which avoids exploring branches that cannot possibly influence the final decision:
+- **Alpha (α)** is the best score the maximizing player is guaranteed so far.
+- **Beta (β)** is the best score the minimizing player can force.
+
+If the current evaluation exceeds β or falls below α, further exploration is cut off (pruned).
+
+### Aspiration Window
+
+Each search iteration begins with a narrow **aspiration window** around the previous score, typically enhancing pruning efficiency.  
+If the actual score falls outside the expected range, the window is re-expanded, and the search is repeated with wider bounds.  
+There are two possible outcomes that can trigger this re-expansion:
+- 📈 **Fail-high**
+- 📉 **Fail-low**
+
+### Transposition Table
+
+The state space is a graph, since identical positions can be reached through different sequences of moves.  
+The **Transposition Table** allows the engine to treat the state space as a tree.  
+It stores previously evaluated positions using a hash-based index, in particular, each entry may contain:
+1. a depth value (used to decide whether to overwrite),
+1. a best move (for move ordering),
+1. a score,
+1. a flag indicating whether the value is:
+  - **exact**
+  - **lower bound** (fail-high)
+  - **upper bound** (fail-low)
+
+### Zobrist Hashing
+
+**Zobrist hashing** is used to efficiently generate a unique identifier for each game position, which serves as a key in the Transposition Table.  
+Each possible game feature, such as a specific piece on a specific square or the current player to move, is assigned a random 64-bit number.  
+The overall hash is computed by XOR-ing the values of all active features in the current position.  
+Because only a few features change with each move, the hash can be updated incrementally, making it both fast and practical.  
+The probability of a hash collision depends on the number of explored positions `m` and the hash size `b = 64`.  
+The following approximation clearly demonstrates that the probability of a collision is negligible.
 
 $$
-P_{\text{collisione}} \approx 1 - \exp\left( -\frac{m^2}{2 \cdot 2^b} \right)
+P_{\text{collision}} \approx 1 - \exp\left( -\frac{m^2}{2 \cdot 2^b} \right)
 $$
 
-- ( m = 240,000 ) è il numero di posizioni esplorate (ogni thread parallelo 1000 al secondo).
-- ( b = 64 ) è il numero di bit del valore hash.
+### Repetition Stack
 
-La probabilità di collisione è praticamente nulla, rendendo questo valore adeguato per garantire unicità nelle configurazioni di gioco.
+To handle **draw by repetition**, the engine maintains a **Repetition Stack**: a history of Zobrist hashes for previously visited positions.  
+If the current hash is already in the stack, the position is immediately evaluated as a draw (score `0`) and not searched further.
 
-## Ricerca Iterativa in Profondità
+## Evaluation and Heuristics
 
-La Ricerca Iterativa in Profondità è una tecnica di ricerca che combina i benefici della ricerca in profondità e della ricerca a larghezza, esplorando l'albero di ricerca con profondità crescente.
-
-Questo approccio permette di esplorare progressivamente più in profondità mentre mantiene la possibilità di interrompere la ricerca in qualsiasi momento, con un risultato parziale. Inoltre, l'iterative deepening favorisce il riutilizzo delle informazioni (come la best move nella TT) e migliora l'efficienza complessiva grazie a potature più rapide e un move ordering più efficace.
-
-## Negamax
-
-## Aspiration Window
-
-## Valutazioni ed Euristiche
-
-Lavori in corso... Luca e Francesco stanno cucinando.
+Work in Progress... Luca and Francesco are cooking.
