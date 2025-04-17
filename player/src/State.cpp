@@ -1,13 +1,22 @@
 #include "State.h"
 
-State::State()
-    : black(), white(), king(), whiteTurn(true),
-      whiteWinner(false), blackWinner(false), zobristHash(0) {}
+State::State() : //da sistemare
+    black(black), white(white), king(king), whiteTurn(whiteTurn),
+    whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash) {} 
 
 State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
-             bool whiteTurn, bool whiteWinner, bool blackWinner, uint64_t zobristHash)
-    : black(black), white(white), king(king), whiteTurn(whiteTurn),
-      whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash) {}
+             bool whiteTurn, bool whiteWinner, bool blackWinner) :
+    black(black), white(white), king(king), whiteTurn(whiteTurn),
+    whiteWinner(whiteWinner), blackWinner(blackWinner) {
+        computeZobristHash();
+    }
+
+State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
+    bool whiteTurn, bool whiteWinner, bool blackWinner) :
+black(black), white(white), king(king), whiteTurn(whiteTurn),
+whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash) {}
+
+uint64_t State::getZobristHash() const { return zobristHash; }
 
 Bitboard State::getBlack() const { return black; }
 Bitboard State::getWhite() const { return white; }
@@ -41,6 +50,16 @@ int State::getScore() const {
 
 bool State::isWhiteWinner() const { return whiteWinner; }
 bool State::isBlackWinner() const { return blackWinner; }
+
+void State::computeZobristHash() {
+    zobristHash = 0;
+    for (int i = 0; i < 81; ++i) {
+        if (white.get(i)) zobristHash ^= zobristTable[0][i]; 
+        if (black.get(i)) zobristHash ^= zobristTable[1][i];
+        if (king.get(i)) zobristHash ^= zobristTable[2][i];
+    }
+    if (isWhiteTurn()) zobristHash ^= zobristWhiteToMove;
+}
 
 bool State::capture(const Bitboard& attacker, const Bitboard& defender) const {
     return false;
