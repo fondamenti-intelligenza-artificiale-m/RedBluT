@@ -53,12 +53,12 @@ bool State::isBlackWinner() const { return blackWinner; }
 
 void State::computeZobristHash() {
     zobristHash = 0;
+    if (isWhiteTurn()) zobristHash ^= zobristWhiteToMove;
     for (int i = 0; i < 81; ++i) {
         if (white.get(i)) zobristHash ^= zobristTable[0][i]; 
         if (black.get(i)) zobristHash ^= zobristTable[1][i];
         if (king.get(i)) zobristHash ^= zobristTable[2][i];
     }
-    if (isWhiteTurn()) zobristHash ^= zobristWhiteToMove;
 }
 
 bool State::capture(const Bitboard& attacker, const Bitboard& defender) const {
