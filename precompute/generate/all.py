@@ -11,7 +11,7 @@ def generate(module_name):
 
 if __name__ == '__main__':
     try:
-        for name in ['loneliness', 'snag', 'move']:
+        for name in ['loneliness', 'snag', 'move', 'magic']:
             generate(name)
     except Exception as e:
         sys.exit(1)
