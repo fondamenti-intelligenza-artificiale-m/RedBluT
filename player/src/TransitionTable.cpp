@@ -1,4 +1,4 @@
-#include "TranspositionTable.h"
+#include "TranspositionTable.hpp"
 
 TranspositionTable& TranspositionTable::getInstance() {
     static TranspositionTable instance;

@@ -1,4 +1,4 @@
-#include "BestMove.h"
+#include "BestMove.hpp"
 
 BestMove& BestMove::getInstance() {
     static BestMove instance;

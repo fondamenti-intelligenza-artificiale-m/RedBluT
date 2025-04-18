@@ -1,4 +1,4 @@
-#include "Bitboard.h"
+#include "Bitboard.hpp"
 
 // Getter per ottenere il bit alla posizione specifica (costante)
 bool Bitboard::get(int position) const {
