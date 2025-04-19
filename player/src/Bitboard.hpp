@@ -1,9 +1,7 @@
 #ifndef BITBOARD_H
 #define BITBOARD_H
 
-#include <iostream>
 #include <cstdint>
-#include <bitset>
 
 class Bitboard {
 public:
@@ -12,6 +10,7 @@ public:
     bool get(int position) const;
 
     // By Value
+    Bitboard clearV(int position) const;
     Bitboard setV(int position) const;
     Bitboard notV() const;
     Bitboard andV(const Bitboard& other) const;
@@ -21,7 +20,8 @@ public:
     Bitboard rightV(int amount) const;
 
     // By Reference
-    Bitboard& set(int position);
+    Bitboard& clearR(int position);
+    Bitboard& setR(int position);
     Bitboard& notR();
     Bitboard& andR(const Bitboard& other);
     Bitboard& orR(const Bitboard& other);

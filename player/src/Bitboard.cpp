@@ -5,6 +5,13 @@ bool Bitboard::get(int position) const {
     return (upper >> (position - 64)) & 1;
 }
 
+Bitboard Bitboard::clearV(int position) const {
+    Bitboard newBoard = *this;
+    if (position < 64) newBoard.lower &= (0ULL << position);
+    else newBoard.upper &= (0ULL << (position - 64));
+    return newBoard;
+}
+
 Bitboard Bitboard::setV(int position) const {
     Bitboard newBoard = *this;
     if (position < 64) newBoard.lower |= (1ULL << position);
@@ -64,7 +71,13 @@ Bitboard Bitboard::rightV(int amount) const {
     return newBoard;
 }
 
-Bitboard& Bitboard::set(int position) {
+Bitboard& Bitboard::clearR(int position) {
+    if (position < 64) lower &= (0ULL << position);
+    else upper &= (0ULL << (position - 64));
+    return *this;
+}
+
+Bitboard& Bitboard::setR(int position) {
     if (position < 64) lower |= (1ULL << position);
     else upper |= (1ULL << (position - 64));
     return *this;
