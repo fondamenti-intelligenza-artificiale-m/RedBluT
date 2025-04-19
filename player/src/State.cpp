@@ -4,19 +4,15 @@ State::State() :
     black(Bitboard(0x11100000001000, 0x0000000000100000001110000011100000001000000000000010000000111000)),
     white(Bitboard(             0x0, 0x0000010000000010000001101100000010000000010000000000000000000000)),
     king( Bitboard(             0x0, 0x0000000000000000000000010000000000000000000000000000000000000000)),
-    whiteTurn(true), whiteWinner(false), blackWinner(false), /*zobristHash(zobristHash) */{
-        computeZobristHash(); // poi lo cambiamo e lo mettimao hardcodato ma già cosi funzione
-    } 
+    whiteTurn(true), whiteWinner(false), blackWinner(false), zobristHash(computeZobristHash()) {} //poi lo hardcodiamo
 
 State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
-             bool whiteTurn, bool whiteWinner, bool blackWinner) :
+            bool whiteTurn, bool whiteWinner, bool blackWinner) :
     black(black), white(white), king(king), whiteTurn(whiteTurn),
-    whiteWinner(whiteWinner), blackWinner(blackWinner) {
-        computeZobristHash();
-    }
+    whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(computeZobristHash()) {}
 
 State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
-    bool whiteTurn, bool whiteWinner, bool blackWinner) :
+            bool whiteTurn, bool whiteWinner, bool blackWinner, uint64_t zobristHash) :
 black(black), white(white), king(king), whiteTurn(whiteTurn),
 whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash) {}
 
@@ -30,12 +26,12 @@ Bitboard State::getWhiteAndKing() const {return getWhite().orC(getKing()); }
 Bitboard State::getPieces() const { return getBlack().orC(getWhiteAndKing()); }
 
 std::vector<int> State::getLegalMovesBlack(int from) const {
-    uint64_t magicKey = ((getPieces() & movesAloneBlack[from]) * magicNumbersBlack[from]) >> magicShiftsBlack[square];
+    uint64_t magicKey = ((getPieces() & movesAloneBlack[from]) * magicNumbersBlack[from]) >> magicShiftsBlack[from];
     return moveTableBlack[from][magicKey];
 }
 
 std::vector<int> State::getLegalMovesWhite(int from) const {
-    uint64_t magicKey = ((getPieces() & movesAloneWhite[from]) * magicNumbersWhite[from]) >> magicShiftsWhite[square];
+    uint64_t magicKey = ((getPieces() & movesAloneWhite[from]) * magicNumbersWhite[from]) >> magicShiftsWhite[from];
     return moveTableWhite[from][magicKey];
 }
 
