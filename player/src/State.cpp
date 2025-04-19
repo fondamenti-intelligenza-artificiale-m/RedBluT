@@ -126,8 +126,9 @@ State State::moveWhite(int from, int to) const {
 }
 
 int State::evaluate() const {
-    if (PositionHistory::getInstance().contains(zobristHash)) return 0; // Pareggio per ripetizione
-    return 1; // Dummy, da migliorare più avanti
+    if (isWhiteWinner()) return 100;
+    if (isBlackWinner()) return -100;
+    return 0; // Dummy, da migliorare più avanti
 }
 
 bool State::isWhiteWinner() const { return whiteWinner; }

@@ -32,126 +32,109 @@ void Engine::negaMaxAspirationWindow(const State& rootState, int maxDepth, int a
     struct StackEntry {
         State state;
         int depth;
-        int alpha;
-        int beta;
-        int moveFrom;
-        int moveTo;
-        int childIndex;
+        int alpha, beta;
+        int moveFrom, moveTo;
+        int childIndex = 0;
         std::vector<std::pair<int, int>> moves;
-        int bestScore;
-        int bestFrom;
-        int bestTo;
+        int bestScore = -1000000;
+        int bestFrom = -1;
+        int bestTo = -1;
     };
-
     std::vector<StackEntry> stack;
-    stack.push_back({rootState, maxDepth, alpha, beta, -1, -1, 0, {}, -1000000, -1, -1});
-
+    stack.push_back({rootState, maxDepth, alpha, beta, -1, -1, 0});
+    PositionHistory& ph = PositionHistory::getInstance();
     TranspositionTable& tt = TranspositionTable::getInstance();
+
+    auto updateParent = [&](StackEntry& parent, int score, int from, int to) {
+        int flippedScore = -score;
+        if (flippedScore > parent.bestScore) {
+            parent.bestScore = flippedScore;
+            parent.bestFrom = from;
+            parent.bestTo = to;
+        }
+        parent.alpha = std::max(parent.alpha, parent.bestScore);
+    };
 
     while (!stack.empty()) {
         StackEntry& entry = stack.back();
 
-        if (entry.depth == 0) {
-            entry.bestScore = entry.state.getScore();
+        // --- Terminal node ---
+        if (entry.depth == 0 || state.isWhiteWinner() || state.isBlackWinner()) {
+            entry.bestScore = entry.state.evaluate();
             stack.pop_back();
 
             if (!stack.empty()) {
-                StackEntry& parent = stack.back();
-                int score = -entry.bestScore;
-                if (score > parent.bestScore) {
-                    parent.bestScore = score;
-                    parent.bestFrom = entry.moveFrom;
-                    parent.bestTo = entry.moveTo;
-                }
-                parent.alpha = std::max(parent.alpha, parent.bestScore);
+                updateParent(stack.back(), entry.bestScore, entry.moveFrom, entry.moveTo);
             } else {
                 bestScore = entry.bestScore;
                 bestFrom = entry.bestFrom;
                 bestTo = entry.bestTo;
             }
-
             continue;
         }
 
-        uint64_t hash = entry.state.getZobristHash();
-
+        // --- TT lookup ---
         if (entry.childIndex == 0) {
+            uint64_t hash = entry.state.getZobristHash();
             TTEntry tte;
             if (tt.lookup(hash, tte) && tte.depth >= entry.depth) {
-                if (tte.type == NodeType::EXACT) {
-                    entry.bestScore = tte.score;
+                bool cutoff = false;
+                switch (tte.type) {
+                    case NodeType::EXACT:
+                        entry.bestScore = tte.score;
+                        cutoff = true;
+                        break;
+                    case NodeType::LOWERBOUND:
+                        if (tte.score >= entry.beta) { entry.bestScore = tte.score; cutoff = true; }
+                        break;
+                    case NodeType::UPPERBOUND:
+                        if (tte.score <= entry.alpha) { entry.bestScore = tte.score; cutoff = true; }
+                        break;
+                }
+                if (cutoff) {
                     stack.pop_back();
-
-                    if (!stack.empty()) {
-                        StackEntry& parent = stack.back();
-                        int score = -entry.bestScore;
-                        if (score > parent.bestScore) {
-                            parent.bestScore = score;
-                            parent.bestFrom = entry.moveFrom;
-                            parent.bestTo = entry.moveTo;
-                        }
-                        parent.alpha = std::max(parent.alpha, parent.bestScore);
-                    } else {
+                    if (!stack.empty()) updateParent(stack.back(), entry.bestScore, entry.moveFrom, entry.moveTo);
+                    else {
                         bestScore = entry.bestScore;
                         bestFrom = entry.bestFrom;
                         bestTo = entry.bestTo;
                     }
-
-                    continue;
-                } else if (tte.type == NodeType::LOWERBOUND && tte.score <= entry.alpha) {
-                    entry.bestScore = tte.score;
-                    stack.pop_back();
-                    continue;
-                } else if (tte.type == NodeType::UPPERBOUND && tte.score >= entry.beta) {
-                    entry.bestScore = tte.score;
-                    stack.pop_back();
                     continue;
                 }
-            }
 
-            Bitboard whitePieces = entry.state.getWhite().orC(entry.state.getKing());
-            for (int from = 0; from < 81; ++from) {
-                if (whitePieces.get(from)) {
-                    std::vector<int> destinations = entry.state.getLegalMovesWhite(from);
-                    for (int to : destinations) {
-                        entry.moves.emplace_back(from, to);
+                // --- Generate moves (first time only) ---
+                Bitboard whitePieces = entry.state.getWhite().orC(entry.state.getKing());
+                for (int from = 0; from < 81; ++from) {
+                    if (whitePieces.get(from)) {
+                        std::vector<int> destinations = entry.state.getLegalMovesWhite(from);
+                        for (int to : destinations) {
+                            entry.moves.emplace_back(from, to);
+                        }
                     }
                 }
             }
-
         }
 
+        // --- No more children to explore: backtrack + TT store ---
         if (entry.childIndex >= entry.moves.size()) {
             TTEntry tte;
             tte.score = entry.bestScore;
             tte.depth = entry.depth;
 
-            if (entry.bestScore <= entry.alpha) {
-                tte.type = NodeType::UPPERBOUND;
-            } else if (entry.bestScore >= entry.beta) {
-                tte.type = NodeType::LOWERBOUND;
-            } else {
-                tte.type = NodeType::EXACT;
-            }
+            if (entry.bestScore <= entry.alpha) tte.type = NodeType::UPPERBOUND;
+            else if (entry.bestScore >= entry.beta) tte.type = NodeType::LOWERBOUND;
+            else tte.type = NodeType::EXACT;
 
             tte.from = entry.bestFrom;
             tte.to = entry.bestTo;
-            tt.store(hash, tte);
 
+            tt.store(entry.state.getZobristHash(), tte);
             stack.pop_back();
 
             if (!stack.empty()) {
-                StackEntry& parent = stack.back();
-                int score = -entry.bestScore;
-                if (score > parent.bestScore) {
-                    parent.bestScore = score;
-                    parent.bestFrom = entry.moveFrom;
-                    parent.bestTo = entry.moveTo;
-                }
-                parent.alpha = std::max(parent.alpha, parent.bestScore);
-                if (parent.alpha >= parent.beta) {
-                    stack.pop_back();
-                }
+                updateParent(stack.back(), entry.bestScore, entry.moveFrom, entry.moveTo);
+                if (stack.back().alpha >= stack.back().beta)
+                    stack.pop_back(); // alpha-beta cutoff
             } else {
                 bestScore = entry.bestScore;
                 bestFrom = entry.bestFrom;
@@ -161,9 +144,9 @@ void Engine::negaMaxAspirationWindow(const State& rootState, int maxDepth, int a
             continue;
         }
 
+        // --- Explore next child ---
         auto [from, to] = entry.moves[entry.childIndex++];
-        State childState = entry.state.moveWhite(from, to);
-
-        stack.push_back({childState, entry.depth - 1, -entry.beta, -entry.alpha, from, to, 0, {}, -1000000, -1, -1});
+        State child = entry.state.moveWhite(from, to);
+        stack.push_back({child, entry.depth - 1, -entry.beta, -entry.alpha, from, to, 0});
     }
 }
