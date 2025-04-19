@@ -22,8 +22,8 @@ bool State::isWhiteTurn() const { return whiteTurn; }
 Bitboard State::getBlack() const { return black; }
 Bitboard State::getWhite() const { return white; }
 Bitboard State::getKing() const { return king; }
-Bitboard State::getWhiteAndKing() const {return getWhite().orC(getKing()); }
-Bitboard State::getPieces() const { return getBlack().orC(getWhiteAndKing()); }
+Bitboard State::getWhiteAndKing() const {return white.orV(king); }
+Bitboard State::getPieces() const { return black.orV(getWhiteAndKing()); }
 
 std::vector<int> State::getLegalMovesBlack(int from) const {
     uint64_t magicKey = ((getPieces() & movesAloneBlack[from]) * magicNumbersBlack[from]) >> magicShiftsBlack[from];
@@ -36,18 +36,40 @@ std::vector<int> State::getLegalMovesWhite(int from) const {
 }
 
 State State::moveBlack(int from, int to) const {
-    // TODO: logica di movimento
-    uint64_t newZobrist = 0; // TODO: calcolare nuovo hash
-    return State(black, white, king, !whiteTurn, whiteWinner, blackWinner, newZobrist);
+    Bitboard newBlack = black;
+    uint64_t newZobristHash = zobristHash ^ zobristWhiteToMove;
+    newBlack.clearR(from);
+    newZobristHash ^= zobristTable[0][from];
+    newBlack.setR(to);
+    newZobristHash ^= zobristTable[0][to];
+
+    //if (black.get(i)) black.clearR(from); cattura e condizione di vottoria
+
+    return State(newBlack, white, king, !whiteTurn, whiteWinner, blackWinner, newZobristHash);
 }
 
 State State::moveWhite(int from, int to) const {
-    // TODO: logica di movimento
-    uint64_t newZobrist = 0; // TODO: calcolare nuovo hash
-    return State(black, white, king, !whiteTurn, whiteWinner, blackWinner, newZobrist);
+    Bitboard newWhite = white;
+    Bitboard newKing = king;
+    uint64_t newZobristHash = zobristHash ^ zobristWhiteToMove;
+    if (king.get(from) & 1) {
+        newKing.clearR(from);
+        newZobristHash ^= zobristTable[2][from];
+        newKing.setR(to);
+        newZobristHash ^= zobristTable[2][to];
+    } else {
+        newWhite.clearR(from);
+        newZobristHash ^= zobristTable[1][from];
+        newWhite.setR(to);
+        newZobristHash ^= zobristTable[1][to];
+    }
+
+    // cattura e condizione di vottoria
+
+    return State(black, newWhite, newKing, !whiteTurn, whiteWinner, blackWinner, newZobristHash);
 }
 
-int State::getScore() const {
+int State::evaluate() const {
     if (PositionHistory::getInstance().contains(zobristHash)) return 0; // Pareggio per ripetizione
     return 1; // Dummy, da migliorare più avanti
 }
@@ -58,13 +80,9 @@ bool State::isBlackWinner() const { return blackWinner; }
 void State::computeZobristHash() {
     zobristHash = 0;
     if (isWhiteTurn()) zobristHash ^= zobristWhiteToMove;
-    for (int i = 0; i < 81; ++i) {
-        if (white.get(i)) zobristHash ^= zobristTable[0][i]; 
-        if (black.get(i)) zobristHash ^= zobristTable[1][i];
+    for (int i = 0; i < 81; ++i) { 
+        if (black.get(i)) zobristHash ^= zobristTable[0][i];
+        if (white.get(i)) zobristHash ^= zobristTable[1][i];
         if (king.get(i)) zobristHash ^= zobristTable[2][i];
     }
-}
-
-bool State::capture(const Bitboard& attacker, const Bitboard& defender) const {
-    return false; //da fare questo si usa in move
 }

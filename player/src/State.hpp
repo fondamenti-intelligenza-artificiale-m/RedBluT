@@ -31,7 +31,7 @@ public:
     State moveBlack(int from, int to) const;
     State moveWhite(int from, int to) const;
 
-    int getScore() const;
+    int evaluate() const;
     bool isWhiteWinner() const;
     bool isBlackWinner() const;
 
@@ -45,7 +45,6 @@ private:
     bool blackWinner;
 
     void computeZobristHash();
-    bool capture(const Bitboard& attacker, const Bitboard& defender) const;
 };
 
 #endif
