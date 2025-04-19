@@ -1,10 +1,9 @@
 #include "State.hpp"
 
 State::State() :
-    black(Bitboard(0x11100000001000, 0x0000000000100000001110000011100000001000000000000010000000111000)),
-    white(Bitboard(             0x0, 0x0000010000000010000001101100000010000000010000000000000000000000)),
-    king( Bitboard(             0x0, 0x0000000000000000000000010000000000000000000000000000000000000000)),
-    whiteTurn(true), whiteWinner(false), blackWinner(false), zobristHash(computeZobristHash()) {} //poi lo hardcodiamo
+    black(camps), white(lookout), king(castle),
+    whiteTurn(true), whiteWinner(false), blackWinner(false),
+    zobristHash(computeZobristHash()) {} //poi lo hardcodiamo
 
 State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
             bool whiteTurn, bool whiteWinner, bool blackWinner) :
@@ -13,8 +12,8 @@ State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
 
 State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
             bool whiteTurn, bool whiteWinner, bool blackWinner, uint64_t zobristHash) :
-black(black), white(white), king(king), whiteTurn(whiteTurn),
-whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash) {}
+    black(black), white(white), king(king), whiteTurn(whiteTurn),
+    whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash) {}
 
 uint64_t State::getZobristHash() const { return zobristHash; }
 
@@ -22,8 +21,7 @@ bool State::isWhiteTurn() const { return whiteTurn; }
 Bitboard State::getBlack() const { return black; }
 Bitboard State::getWhite() const { return white; }
 Bitboard State::getKing() const { return king; }
-Bitboard State::getWhiteAndKing() const {return white.orV(king); }
-Bitboard State::getPieces() const { return black.orV(getWhiteAndKing()); }
+Bitboard State::getPieces() const { return black.orV(white).orV(king); }
 
 std::vector<int> State::getLegalMovesBlack(int from) const {
     uint64_t magicKey = ((getPieces() & movesAloneBlack[from]) * magicNumbersBlack[from]) >> magicShiftsBlack[from];
@@ -37,36 +35,94 @@ std::vector<int> State::getLegalMovesWhite(int from) const {
 
 State State::moveBlack(int from, int to) const {
     Bitboard newBlack = black;
+    Bitboard newWhite = white;
+    Bitboard newKing = king;
+    bool newBlackWinner = false;
     uint64_t newZobristHash = zobristHash ^ zobristWhiteToMove;
     newBlack.clearR(from);
     newZobristHash ^= zobristTable[0][from];
     newBlack.setR(to);
     newZobristHash ^= zobristTable[0][to];
-
-    //if (black.get(i)) black.clearR(from); cattura e condizione di vottoria
-
-    return State(newBlack, white, king, !whiteTurn, whiteWinner, blackWinner, newZobristHash);
+    if (newBlack.get(31) && newBlack.get(39) && newBlack.get(41) && newBlack.get(49) && newKing.get(40)) {
+        newKing.clearR(40);
+        newZobristHash ^= zobristTable[2][40];
+        newBlackWinner = true;
+    }
+    if ((newBlack.get(22) && newBlack.get(30) && newBlack.get(32) && newKing.get(31))) {
+        newKing.clearR(31);
+        newZobristHash ^= zobristTable[2][31];
+        newBlackWinner = true;
+    }
+    if (newBlack.get(30) && newBlack.get(38) && newBlack.get(48) && newKing.get(39)) {
+        newKing.clearR(39);
+        newZobristHash ^= zobristTable[2][39];
+        newBlackWinner = true;
+    }
+    if (newBlack.get(32) && newBlack.get(42) && newBlack.get(50) && newKing.get(41)) {
+        newKing.clearR(41);
+        newZobristHash ^= zobristTable[2][41];
+        newBlackWinner = true;
+    }
+    if (newBlack.get(48) && newBlack.get(50) && newBlack.get(58) && newKing.get(49)) {
+        newKing.clearR(49);
+        newZobristHash ^= zobristTable[2][49];
+        newBlackWinner = true;
+    }
+    for (int dir = 0; dir < 4; ++dir) {
+        int maybeCaptured = to + directions[dir];
+        int nedded = maybeCaptured + directions[dir];
+        if (nedded < 0 || nedded > 80) continue;
+        if (!(newWhite.orC(newKing).get(maybeCaptured) & 1)) continue;
+        if (!(newBlack.orC(camps).orC(castle).get(nedded) & 1)) continue;
+        if ((dir == -1 || dir == 1)) {
+            if (!(to / 9 == maybeCaptured / 9 && to / 9 == nedded / 9)) continue;
+        } else {
+            if (!(to % 9 == maybeCaptured % 9 && to % 9 == nedded % 9)) continue;
+        }
+        if (newWhite.get(maybeCaptured) & 1) {
+            newWhite.clearR(maybeCaptured);
+            newZobristHash ^= zobristTable[1][maybeCaptured];
+        } else if (newKing.get(maybeCaptured) & 1) {
+            newKing.clearR(maybeCaptured);
+            newZobristHash ^= zobristTable[2][40];
+        }
+    }
+    return State(newBlack, newWhite, newKing, !whiteTurn, whiteWinner, newBlackWinner, newZobristHash);
 }
 
 State State::moveWhite(int from, int to) const {
+    Bitboard newBlack = black;
     Bitboard newWhite = white;
     Bitboard newKing = king;
+    bool newWhiteWinner = false;
     uint64_t newZobristHash = zobristHash ^ zobristWhiteToMove;
     if (king.get(from) & 1) {
         newKing.clearR(from);
         newZobristHash ^= zobristTable[2][from];
         newKing.setR(to);
         newZobristHash ^= zobristTable[2][to];
+        if ((to / 9 == 0) || (to / 9 == 8) || (to % 9 == 0) || (to % 9 == 8)) newWhiteWinner = true;
     } else {
         newWhite.clearR(from);
         newZobristHash ^= zobristTable[1][from];
         newWhite.setR(to);
         newZobristHash ^= zobristTable[1][to];
     }
-
-    // cattura e condizione di vottoria
-
-    return State(black, newWhite, newKing, !whiteTurn, whiteWinner, blackWinner, newZobristHash);
+    for (int dir = 0; dir < 4; ++dir) {
+        int maybeCaptured = to + directions[dir];
+        int nedded = maybeCaptured + directions[dir];
+        if (nedded < 0 || nedded > 80) continue;
+        if (!(newBlack.get(maybeCaptured) & 1)) continue;
+        if (!(white.orC(king).orC(camps).orC(castle).get(nedded) & 1)) continue;
+        if ((dir == -1 || dir == 1)) {
+            if (!(to / 9 == maybeCaptured / 9 && to / 9 == nedded / 9)) continue;
+        } else {
+            if (!(to % 9 == maybeCaptured % 9 && to % 9 == nedded % 9)) continue;
+        }
+        newBlack.clearR(maybeCaptured);
+        newZobristHash ^= zobristTable[0][maybeCaptured];
+    }
+    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, newZobristHash);
 }
 
 int State::evaluate() const {

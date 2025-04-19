@@ -36,6 +36,11 @@ public:
     bool isBlackWinner() const;
 
 private:
+    int directions[4] = {1, 9, -1, -9};
+    Bitboard camps  (0x11100000001000, 0x0000000000100000001110000011100000001000000000000010000000111000);
+    Bitboard lookout(             0x0, 0x0000010000000010000001101100000010000000010000000000000000000000);
+    Bitboard castle (             0x0, 0x0000000000000000000000010000000000000000000000000000000000000000);
+
     uint64_t zobristHash;
     Bitboard black;
     Bitboard white;
