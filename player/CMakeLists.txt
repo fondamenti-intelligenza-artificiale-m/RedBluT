@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
-project(RedBluT)
+project(player)
 
 # Usa C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Aggiungi tutti i file sorgente
-add_executable(RedBluT
+add_executable(player
     src/BestMove.cpp
     src/PositionHistory.cpp
-    scr/TranspositionTable.cpp
+    src/TranspositionTable.cpp
     src/Bitboard.cpp
     src/State.cpp
     src/Engine.cpp
@@ -17,4 +17,4 @@ add_executable(RedBluT
 )
 
 # Se hai header, li puoi includere con:
-target_include_directories(RedBluT PRIVATE src)
+target_include_directories(player PRIVATE src)

@@ -18,6 +18,7 @@ public:
     Bitboard xorV(const Bitboard& other) const;
     Bitboard leftV(int amount) const;
     Bitboard rightV(int amount) const;
+    Bitboard mulV(const Bitboard& other) const;
 
     // By Reference
     Bitboard& clearR(int position);
@@ -28,8 +29,8 @@ public:
     Bitboard& xorR(const Bitboard& other);
     Bitboard& leftR(int amount);
     Bitboard& rightR(int amount);
+    Bitboard& mulR(const Bitboard& other);
 
-private:
     uint64_t upper;
     uint64_t lower;
 };

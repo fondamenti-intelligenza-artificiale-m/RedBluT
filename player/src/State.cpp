@@ -1,19 +1,26 @@
 #include "State.hpp"
 
 State::State() :
+    camps  (0b11100000001000, 0b0000000000100000001110000011100000001000000000000010000000111000),
+    lookout(             0b0, 0b0000010000000010000001101100000010000000010000000000000000000000),
+    castle (             0b0, 0b0000000000000000000000010000000000000000000000000000000000000000),
     black(camps), white(lookout), king(castle),
     whiteTurn(true), whiteWinner(false), blackWinner(false),
-    zobristHash(computeZobristHash()) {} //poi lo hardcodiamo
+    zobristHash(0) //questo invece lo cambieremo col valore hardcodato invece di calcolarelo
+{
+    computeZobristHash(); //questo nella versione finale lo togliamo
+} 
 
-State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
-            bool whiteTurn, bool whiteWinner, bool blackWinner) :
-    black(black), white(white), king(king), whiteTurn(whiteTurn),
-    whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(computeZobristHash()) {}
-
-State::State(const Bitboard& black, const Bitboard& white, const Bitboard& king,
-            bool whiteTurn, bool whiteWinner, bool blackWinner, uint64_t zobristHash) :
-    black(black), white(white), king(king), whiteTurn(whiteTurn),
-    whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash) {}
+State::State(const Bitboard& white, const Bitboard& black, const Bitboard& kings,
+             bool whiteTurn, bool whiteWinner, bool blackWinner, uint64_t zobristHash) :
+    camps  (0b11100000001000, 0b0000000000100000001110000011100000001000000000000010000000111000),
+    lookout(             0b0, 0b0000010000000010000001101100000010000000010000000000000000000000),
+    castle (             0b0, 0b0000000000000000000000010000000000000000000000000000000000000000),   
+    white(white), black(black), king(kings),
+    whiteTurn(whiteTurn), whiteWinner(whiteWinner), blackWinner(blackWinner), zobristHash(zobristHash)
+{
+    if (zobristHash == -1) computeZobristHash();
+}
 
 uint64_t State::getZobristHash() const { return zobristHash; }
 
@@ -23,14 +30,22 @@ Bitboard State::getWhite() const { return white; }
 Bitboard State::getKing() const { return king; }
 Bitboard State::getPieces() const { return black.orV(white).orV(king); }
 
-std::vector<int> State::getLegalMovesBlack(int from) const {
-    uint64_t magicKey = ((getPieces() & movesAloneBlack[from]) * magicNumbersBlack[from]) >> magicShiftsBlack[from];
-    return moveTableBlack[from][magicKey];
+Bitboard State::getLegalMovesBlack(int from) const {
+    return magicLookUpBlack[from]
+        [getPieces()
+            .andV(movesAloneBlack[from])
+            .mulV(magicNumbersBlack[from])
+            .rightV(magicShiftsBlack[from])
+            .lower];
 }
 
-std::vector<int> State::getLegalMovesWhite(int from) const {
-    uint64_t magicKey = ((getPieces() & movesAloneWhite[from]) * magicNumbersWhite[from]) >> magicShiftsWhite[from];
-    return moveTableWhite[from][magicKey];
+Bitboard State::getLegalMovesWhite(int from) const {
+    return magicLookUpWhite[from]
+        [getPieces()
+            .andV(movesAloneWhite[from])
+            .mulV(magicNumbersWhite[from])
+            .rightV(magicShiftsWhite[from])
+            .lower];
 }
 
 State State::moveBlack(int from, int to) const {
@@ -72,8 +87,8 @@ State State::moveBlack(int from, int to) const {
         int maybeCaptured = to + directions[dir];
         int nedded = maybeCaptured + directions[dir];
         if (nedded < 0 || nedded > 80) continue;
-        if (!(newWhite.orC(newKing).get(maybeCaptured) & 1)) continue;
-        if (!(newBlack.orC(camps).orC(castle).get(nedded) & 1)) continue;
+        if (!(newWhite.orV(newKing).get(maybeCaptured) & 1)) continue;
+        if (!(newBlack.orV(camps).orV(castle).get(nedded) & 1)) continue;
         if ((dir == -1 || dir == 1)) {
             if (!(to / 9 == maybeCaptured / 9 && to / 9 == nedded / 9)) continue;
         } else {
@@ -113,7 +128,7 @@ State State::moveWhite(int from, int to) const {
         int nedded = maybeCaptured + directions[dir];
         if (nedded < 0 || nedded > 80) continue;
         if (!(newBlack.get(maybeCaptured) & 1)) continue;
-        if (!(white.orC(king).orC(camps).orC(castle).get(nedded) & 1)) continue;
+        if (!(white.orV(king).orV(camps).orV(castle).get(nedded) & 1)) continue;
         if ((dir == -1 || dir == 1)) {
             if (!(to / 9 == maybeCaptured / 9 && to / 9 == nedded / 9)) continue;
         } else {

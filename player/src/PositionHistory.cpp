@@ -31,6 +31,6 @@ bool PositionHistory::empty() const {
     return stack.empty();
 }
 
-size_t PositionHistory::size() const {
+std::size_t PositionHistory::size() const {
     return stack.size();
 }
