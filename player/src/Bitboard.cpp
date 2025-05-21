@@ -155,7 +155,7 @@ Bitboard& Bitboard::mulR(const Bitboard& other) {
     return *this;
 }
 
-std::vector<int> toIndexVector() const {
+std::vector<int> Bitboard::toIndexVector() const {
     std::vector<int> indices;
 
     uint64_t l = lower;

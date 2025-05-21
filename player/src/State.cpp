@@ -31,7 +31,7 @@ Bitboard State::getKing() const { return king; }
 Bitboard State::getPieces() const { return black.orV(white).orV(king); }
 
 Bitboard State::getLegalMoves(int from) const {
-    state.isWhiteTurn() ? state.getLegalMovesWhite(from) : state.getLegalMovesBlack(from);
+    return this->isWhiteTurn() ? this->getLegalMovesWhite(from) : this->getLegalMovesBlack(from);
 }
 
 Bitboard State::getLegalMovesBlack(int from) const {
@@ -53,7 +53,7 @@ Bitboard State::getLegalMovesWhite(int from) const {
 }
 
 State State::move(int from, int to) const {
-    return this.isWhiteTurn ? this.moveWhite(from, to) : this.moveBlack(from, to);
+    return this->isWhiteTurn() ? this->moveWhite(from, to) : this->moveBlack(from, to);
 }
 
 State State::moveBlack(int from, int to) const {
@@ -110,8 +110,7 @@ State State::moveBlack(int from, int to) const {
             //newZobristHash ^= zobristTable[2][40];
         }
     }
-    uint64_t newZobristHash = computeZobristHash();
-    return State(newBlack, newWhite, newKing, !whiteTurn, whiteWinner, newBlackWinner, newZobristHash);
+    return State(newBlack, newWhite, newKing, !whiteTurn, whiteWinner, newBlackWinner, 0);
 }
 
 State State::moveWhite(int from, int to) const {
@@ -146,8 +145,7 @@ State State::moveWhite(int from, int to) const {
         newBlack.clearR(maybeCaptured);
         //newZobristHash ^= zobristTable[0][maybeCaptured];
     }
-    uint64_t newZobristHash = computeZobristHash();
-    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, newZobristHash);
+    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, 0);
 }
 
 int State::evaluate() const {

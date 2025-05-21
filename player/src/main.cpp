@@ -2,7 +2,7 @@
 
 int main() {
     // Creazione di due oggetti Bitboard
-    Bitboard b1, b2;
+    /*Bitboard b1, b2;
 
     // Impostiamo alcuni bit nelle bitboard
     b1.setBit(5).setBit(10).setBit(20);
@@ -31,7 +31,7 @@ int main() {
     b1.shiftLeft(3).print();
 
     std::cout << "\nEseguiamo shiftRight su b1 di 2 posizioni:" << std::endl;
-    b1.shiftRight(2).print();
+    b1.shiftRight(2).print();*/
 
     return 0;
 }
