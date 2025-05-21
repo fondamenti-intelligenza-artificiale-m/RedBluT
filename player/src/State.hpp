@@ -26,6 +26,7 @@ public:
     Bitboard getLegalMovesBlack(int from) const;
     Bitboard getLegalMovesWhite(int from) const;
 
+    State move(int from, int to) const;
     State moveBlack(int from, int to) const;
     State moveWhite(int from, int to) const;
 

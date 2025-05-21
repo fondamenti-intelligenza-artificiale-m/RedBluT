@@ -2,6 +2,7 @@
 #define BITBOARD_H
 
 #include <cstdint>
+#include <vector>
 
 class Bitboard {
 public:
@@ -30,6 +31,9 @@ public:
     Bitboard& leftR(int amount);
     Bitboard& rightR(int amount);
     Bitboard& mulR(const Bitboard& other);
+
+    // To Vector
+    std::vector<int> toIndexVector() const 
 
     uint64_t upper;
     uint64_t lower;
