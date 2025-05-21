@@ -1,4 +1,4 @@
-#include "PositionHistory.h"
+#include "PositionHistory.hpp"
 
 PositionHistory& PositionHistory::getInstance() {
     static PositionHistory instance;

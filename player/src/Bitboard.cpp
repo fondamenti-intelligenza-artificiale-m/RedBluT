@@ -1,79 +1,130 @@
-#include "Bitboard.h"
+#include "Bitboard.hpp"
 
-Bitboard& Bitboard::setBit(int position) {
-    if (position < 64) {
-        upper |= (1ULL << position);  // Set bit in the upper part
-    } else {
-        lower |= (1ULL << (position - 64));  // Set bit in the lower part
-    }
-    return *this;  // Return the current object for fluent interface
+bool Bitboard::get(int position) const {
+    if (position < 64) return (lower >> position) & 1;
+    return (upper >> (position - 64)) & 1;
 }
 
-Bitboard& Bitboard::clearBit(int position) {
-    if (position < 64) {
-        upper &= ~(1ULL << position);  // Clear bit in the upper part
-    } else {
-        lower &= ~(1ULL << (position - 64));  // Clear bit in the lower part
-    }
-    return *this;  // Return the current object for fluent interface
+Bitboard Bitboard::clearV(int position) const {
+    Bitboard newBoard = *this;
+    if (position < 64) newBoard.lower &= (0ULL << position);
+    else newBoard.upper &= (0ULL << (position - 64));
+    return newBoard;
 }
 
-bool Bitboard::getBit(int position) const {
-    if (position < 64) {
-        return (upper & (1ULL << position)) != 0;
-    } else {
-        return (lower & (1ULL << (position - 64))) != 0;
-    }
+Bitboard Bitboard::setV(int position) const {
+    Bitboard newBoard = *this;
+    if (position < 64) newBoard.lower |= (1ULL << position);
+    else newBoard.upper |= (1ULL << (position - 64));
+    return newBoard;
 }
 
-Bitboard& Bitboard::notOp() {
+Bitboard Bitboard::notV() const {
+    Bitboard newBoard = *this;
+    newBoard.upper = ~newBoard.upper;
+    newBoard.lower = ~newBoard.lower;
+    return newBoard;
+}
+
+Bitboard Bitboard::andV(const Bitboard& other) const {
+    Bitboard newBoard = *this;
+    newBoard.upper &= other.upper;
+    newBoard.lower &= other.lower;
+    return newBoard;
+}
+
+Bitboard Bitboard::orV(const Bitboard& other) const {
+    Bitboard newBoard = *this;
+    newBoard.upper |= other.upper;
+    newBoard.lower |= other.lower;
+    return newBoard;
+}
+
+Bitboard Bitboard::xorV(const Bitboard& other) const {
+    Bitboard newBoard = *this;
+    newBoard.upper ^= other.upper;
+    newBoard.lower ^= other.lower;
+    return newBoard;
+}
+
+Bitboard Bitboard::leftV(int amount) const {
+    Bitboard newBoard = *this;
+    if (amount < 64) {
+        newBoard.upper = (newBoard.upper << amount) | (newBoard.lower >> (64 - amount));
+        newBoard.lower = newBoard.lower << amount;
+    } else {
+        newBoard.upper = newBoard.lower << (amount - 64);
+        newBoard.lower = 0;
+    }
+    return newBoard;
+}
+
+Bitboard Bitboard::rightV(int amount) const {
+    Bitboard newBoard = *this;
+    if (amount < 64) {
+        newBoard.lower = (newBoard.lower >> amount) | (newBoard.upper << (64 - amount));
+        newBoard.upper = newBoard.upper >> amount;
+    } else {
+        newBoard.lower = upper >> (amount - 64);
+        newBoard.upper = 0;
+    }
+    return newBoard;
+}
+
+Bitboard& Bitboard::clearR(int position) {
+    if (position < 64) lower &= (0ULL << position);
+    else upper &= (0ULL << (position - 64));
+    return *this;
+}
+
+Bitboard& Bitboard::setR(int position) {
+    if (position < 64) lower |= (1ULL << position);
+    else upper |= (1ULL << (position - 64));
+    return *this;
+}
+
+Bitboard& Bitboard::notR() {
     upper = ~upper;
     lower = ~lower;
-    return *this;  // Return the current object for fluent interface
+    return *this;
 }
 
-Bitboard& Bitboard::andOp(const Bitboard& other) {
+Bitboard& Bitboard::andR(const Bitboard& other) {
     upper &= other.upper;
     lower &= other.lower;
-    return *this;  // Return the current object for fluent interface
+    return *this;
 }
 
-Bitboard& Bitboard::orOp(const Bitboard& other) {
+Bitboard& Bitboard::orR(const Bitboard& other) {
     upper |= other.upper;
     lower |= other.lower;
-    return *this;  // Return the current object for fluent interface
+    return *this;
 }
 
-Bitboard& Bitboard::xorOp(const Bitboard& other) {
+Bitboard& Bitboard::xorR(const Bitboard& other) {
     upper ^= other.upper;
     lower ^= other.lower;
-    return *this;  // Return the current object for fluent interface
+    return *this;
 }
 
-Bitboard& Bitboard::shiftLeft(int positions) {
-    if (positions < 64) {
-        upper <<= positions;
-        upper |= (lower >> (64 - positions));
-        lower <<= positions;
+Bitboard& Bitboard::leftR(int amount) {
+    if (amount < 64) {
+        upper = (upper << amount) | (lower >> (64 - amount));
+        lower = lower << amount;
     } else {
-        lower = upper << (positions - 64);
-        upper = 0;
-    }
-    return *this;  // Return the current object for fluent interface
-}
-
-Bitboard& Bitboard::shiftRight(int positions) {
-    if (positions < 64) {
-        lower >>= positions;
-        lower |= (upper << (64 - positions));
-        upper >>= positions;
-    } else {
-        upper = lower >> (positions - 64);
+        upper = lower << (amount - 64);
         lower = 0;
     }
-    return *this;  // Return the current object for fluent interface
+    return *this;
 }
 
-void Bitboard::print() const {
-    std::cout << "Upper: " << std::bitset<64>(upper) << ", Lower: " << std::bitset<64>(lower) << std::endl;
+Bitboard& Bitboard::rightR(int amount) {
+    if (amount < 64) {
+        lower = (lower >> amount) | (upper << (64 - amount));
+        upper = upper >> amount;
+    } else {
+        lower = upper >> (amount - 64);
+        upper = 0;
+    }
+    return *this;
 }

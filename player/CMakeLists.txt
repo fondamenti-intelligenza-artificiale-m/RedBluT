@@ -7,8 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Aggiungi tutti i file sorgente
 add_executable(RedBluT
-    src/main.cpp
+    src/BestMove.cpp
+    src/PositionHistory.cpp
+    scr/TranspositionTable.cpp
     src/Bitboard.cpp
+    src/State.cpp
+    src/Engine.cpp
+    src/main.cpp
 )
 
 # Se hai header, li puoi includere con:
