@@ -145,13 +145,164 @@ State State::moveWhite(int from, int to) const {
         newBlack.clearR(maybeCaptured);
         //newZobristHash ^= zobristTable[0][maybeCaptured];
     }
-    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, 0);
+    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, newZobristHash);
+}
+
+int State::getKingPosition() const {
+    for (int i = 0; i < 81; ++i) {
+        if (king.get(i)) return i;
+    }
+    return -1; // King not found
 }
 
 int State::evaluate() const {
-    if (isWhiteWinner()) return 100;
-    if (isBlackWinner()) return -100;
-    return 0; // Dummy, da migliorare più avanti
+    if (isWhiteWinner()) return 10000;
+    if (isBlackWinner()) return -10000;
+    int result = 0;
+    result += checkDiagonal();
+    result += whiteEdges();
+    result += blackNearKing();
+    result += countPieces();
+    result += checkFreeWay();
+    result += kingMobility();
+    return 0; 
+}
+
+
+// Valutare se diagonale completa
+int State::checkDiagonal() const {
+    const int weight = - 100;
+    int count = black.andV(diagonals).countOnes();
+    return count * weight;
+}
+
+int State::whiteEdges() const {
+    int result = 0;
+
+    const int weight = 100;
+
+    if (white.get(1) || white.get(2))
+        result += weight;
+    if (white.get(6) || white.get(7))
+        result += weight;
+    if (white.get(9) || white.get(18))
+        result += weight;
+    if (white.get(17) || white.get(26))
+        result += weight;
+    if (white.get(54) || white.get(63))
+        result += weight;
+    if (white.get(62) || white.get(71))
+        result += weight;
+    if (white.get(78) || white.get(79))
+        result += weight;
+    if (white.get(73) || white.get(74))
+        result += weight;
+    return result;
+}
+
+int State::blackNearKing() const {
+    int result = 0;
+    const int weight = 250;
+    if (king.get(40)){
+        if(black.get(31))
+            result -= weight;
+        if(black.get(39))
+            result -= weight;
+        if(black.get(41))
+            result -= weight;
+        if(black.get(49))
+            result -= weight;    
+    }else if(king.get(31)) {
+        if (black.get(22))
+            result -= weight;
+        if (black.get(30))
+            result -= weight;
+        if (black.get(32))
+            result -= weight; 
+    }else if (king.get(39)) {
+        if (black.get(30))
+            result -= weight;
+        if (black.get(38))
+            result -= weight;
+        if (black.get(48))
+            result -= weight; 
+    }else if (king.get(41)) {
+        if (black.get(32))
+            result -= weight;
+        if (black.get(42))
+            result -= weight;
+        if (black.get(50))
+            result -= weight; 
+    }else if (king.get(49)) {
+        if (black.get(48))
+            result -= weight;
+        if (black.get(50))
+            result -= weight;
+        if (black.get(58))
+            result -= weight; 
+    }else {
+        int kingPos = getKingPosition();
+        for(int i = 0; i < 4; ++i) {
+            if (black.get(kingPos + directions[i])) {
+                result -= weight;
+                //break; //Il re potrebbe piazzarsi in mezzo a due pedine nere già presenti
+            }
+        }
+        // re vicino all'angolo delle caserme
+        if (kingPos==12 || kingPos==14 || kingPos==28 || kingPos==34 || kingPos==46 || kingPos==52 || kingPos==66 || kingPos==68)
+            result -= weight*2;
+        else if (kingPos==22 || kingPos==38 || kingPos==42 || kingPos==58)
+            result -= weight;
+    }
+    return result;
+}
+
+
+int State::checkFreeWay() const{
+    int result = 0;
+    bool found = false;
+
+    if(black.andV(white).andV(row3).isEmpty()){
+        result += 30;
+        if(king.andV(row3).isEmpty())
+            result += 1000;
+    }
+    if(black.andV(white).andV(row7).isEmpty()){
+        result += 30;
+        if(!found && king.andV(row7).isEmpty())
+            result += 1000;
+    }
+    if(black.andV(white).andV(columnC).isEmpty()){
+        result += 30;
+        if(!found && king.andV(columnC).isEmpty())
+            result += 1000;
+    }
+    if(black.andV(white).andV(columnG).isEmpty()){
+        result += 30;
+        if(!found && king.andV(columnG).isEmpty())
+            result += 1000;
+    }
+    return result;
+}
+
+int State::countPieces() const{
+    return white.countOnes()*50 - black.countOnes()*25;
+}
+
+
+// Lasciamo commentato il check sul goal
+int State::kingMobility() const {
+    int result = 0;
+    int weight = -10;
+    //int goalweight = 25;
+    int kingPos = getKingPosition();
+    Bitboard movesKing = movesAloneWhite[kingPos];
+    int piecesInTrajectory = movesKing.andV(black).countOnes() + movesKing.andV(white).countOnes();
+    result += piecesInTrajectory*weight;
+    //int goalInTrajectory = movesKing.andV(goal).countOnes();
+    //result += goalInTrajectory*goalweight;
+
+    return result;
 }
 
 bool State::isWhiteWinner() const { return whiteWinner; }
