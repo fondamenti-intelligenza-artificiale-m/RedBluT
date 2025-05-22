@@ -145,14 +145,7 @@ State State::moveWhite(int from, int to) const {
         newBlack.clearR(maybeCaptured);
         //newZobristHash ^= zobristTable[0][maybeCaptured];
     }
-    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, 0);
-}
-
-int State::getKingPosition() const {
-    for (int i = 0; i < 81; ++i) {
-        if (king.get(i)) return i;
-    }
-    return -1; // King not found
+    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, newZobristHash);
 }
 
 int State::evaluate() const {
@@ -165,7 +158,7 @@ int State::evaluate() const {
     result += countPieces();
     result += checkFreeWay();
     result += kingMobility();
-    return 0; // Dummy, da migliorare più avanti
+    return 0; 
 }
 
 

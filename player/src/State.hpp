@@ -2,9 +2,9 @@
 #define STATE_H
 
 #include "ZobristParams.hpp"
+#include "Bitboard.hpp"
 #include "MagicLookUpBlack.hpp"
 #include "MagicLookUpWhite.hpp"
-#include "Bitboard.hpp"
 #include "PositionHistory.hpp"
 #include <vector>
 
@@ -23,9 +23,11 @@ public:
     Bitboard getWhiteAndKing() const;
     Bitboard getPieces() const;
 
+    Bitboard getLegalMoves(int from) const;
     Bitboard getLegalMovesBlack(int from) const;
     Bitboard getLegalMovesWhite(int from) const;
 
+    State move(int from, int to) const;
     State moveBlack(int from, int to) const;
     State moveWhite(int from, int to) const;
 
