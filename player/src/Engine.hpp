@@ -15,6 +15,7 @@
 #include <unistd.h>       // per close, write, sleep
 #include <netinet/in.h>
 #include <string>
+#include <cstring>
 #include <cctype>
 
 class Engine {
@@ -38,6 +39,7 @@ private:
     void iterativeDeepening(const State& initialState, int& bestFrom, int& bestTo);
     void negaMaxAspirationWindow(const State& state, int depth, int alpha, int beta,
                                  int& bestScore, int& bestFrom, int& bestTo);
+    std::string indexToCoordinate(int index);
 };
 
 #endif

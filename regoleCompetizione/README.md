@@ -40,10 +40,8 @@ Comunication messages are JSON strings:
 
 ### Comunication JSON Format
 This is the Action to string method (java version):
-```Java
-public String toString() {
-		return "Turn: " + this.turn + " " + "Pawn from " + from + " to " + to;
-	}
+```C++
+sprintf(moveString, "{\"from\":\"%c%d\",\"to\":\"%c%d\",\"turn\":\"WHITE\"}\n", startColumn, startRow, targetColumn, targetRow);
 ```
 The format of the move to send is: ``` Turn: W Pawn from e4 to b4 ```
 
