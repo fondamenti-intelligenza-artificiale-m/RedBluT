@@ -33,7 +33,7 @@ public:
     Bitboard& mulR(const Bitboard& other);
 
     // To Vector
-    std::vector<int> toIndexVector() const 
+    std::vector<int> toIndexVector() const;
 
     uint64_t upper;
     uint64_t lower;
