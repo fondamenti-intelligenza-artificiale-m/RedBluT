@@ -8,6 +8,8 @@ public:
     Bitboard(uint64_t upper = 0, uint64_t lower = 0) : upper(upper), lower(lower) {}
 
     bool get(int position) const;
+    bool isEmpty() const { return upper == 0 && lower == 0;}
+    int countOnes() const { return __builtin_popcountll(lower) + __builtin_popcountll(upper);}
 
     // By Value
     Bitboard clearV(int position) const;
