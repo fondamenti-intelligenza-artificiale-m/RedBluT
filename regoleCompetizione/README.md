@@ -45,7 +45,13 @@ public String toString() {
 		return "Turn: " + this.turn + " " + "Pawn from " + from + " to " + to;
 	}
 ```
-The format of the move is: ``` Turn: W Pawn from e4 to b4 ```
+The format of the move to send is: ``` Turn: W Pawn from e4 to b4 ```
+
+The format of the state that the server send to us:
+```Json
+	{"board":[["BLACK","EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","EMPTY","BLACK"],["EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","EMPTY","EMPTY","EMPTY"],["EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","BLACK","EMPTY","EMPTY"],["EMPTY","KING","EMPTY","EMPTY","EMPTY","WHITE","EMPTY","EMPTY","EMPTY"],["EMPTY","EMPTY","BLACK","BLACK","THRONE","EMPTY","EMPTY","EMPTY","EMPTY"],["BLACK","EMPTY","WHITE","EMPTY","WHITE","BLACK","EMPTY","EMPTY","EMPTY"],["EMPTY","EMPTY","EMPTY","WHITE","EMPTY","EMPTY","WHITE","EMPTY","EMPTY"],["EMPTY","EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","BLACK","EMPTY"],["EMPTY","EMPTY","EMPTY","EMPTY","BLACK","BLACK","EMPTY","EMPTY","EMPTY"]],"turn":"BLACK"}
+    {"board":[["BLACK","EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","EMPTY","BLACK"],["EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","EMPTY","EMPTY","EMPTY"],["EMPTY","BLACK","EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","EMPTY"],["EMPTY","KING","EMPTY","EMPTY","EMPTY","WHITE","EMPTY","EMPTY","EMPTY"],["EMPTY","EMPTY","BLACK","BLACK","THRONE","EMPTY","EMPTY","EMPTY","EMPTY"],["BLACK","EMPTY","WHITE","EMPTY","WHITE","BLACK","EMPTY","EMPTY","EMPTY"],["EMPTY","EMPTY","EMPTY","WHITE","EMPTY","EMPTY","WHITE","EMPTY","EMPTY"],["EMPTY","EMPTY","EMPTY","EMPTY","EMPTY","BLACK","EMPTY","BLACK","EMPTY"],["EMPTY","EMPTY","EMPTY","EMPTY","BLACK","BLACK","EMPTY","EMPTY","EMPTY"]],"turn":"BLACKWIN"}
+```
 
 ### Socket
 We need a socket to comunicate with server:
@@ -74,3 +80,59 @@ We need a socket to comunicate with server:
  ``` 
 - we use ```read(sd, stateString, 1);``` to read information from server
 - we use ```write(sd, name, sizeof(char) * strlen(name));``` to comunicate with server
+
+## Come viene inviato lo state dal server ad ogni turno
+JSON format 
+``` Json
+[scacchiera con lettere]-
+[TURN]
+```
+
+``` Java
+Scacchiera con lettere -> per ogni 81 caselle abbiamo uno stato con lettere
+Pawn board[][];
+public enum Pawn {
+		EMPTY("O"), WHITE("W"), BLACK("B"), THRONE("T"), KING("K");
+		private final String pawn;
+
+		private Pawn(String s) {
+			pawn = s;
+		}
+		
+		public static Pawn fromString(String s) {
+			switch (s) {
+			case "O":
+				return Pawn.EMPTY;
+			case "W":
+				return Pawn.WHITE;
+			case "B":
+				return Pawn.BLACK;
+			case "K":
+				return Pawn.KING;
+			case "T":
+				return Pawn.THRONE;
+			default:
+				return null;
+			}
+		}
+
+
+
+TURN -> abbiamo il turno ma anche lo stato finale della partita
+public enum Turn {
+		WHITE("W"), BLACK("B"), WHITEWIN("WW"), BLACKWIN("BW"), DRAW("D");
+		private final String turn;
+
+		private Turn(String s) {
+			turn = s;
+		}
+
+		public boolean equalsTurn(String otherName) {
+			return (otherName == null) ? false : turn.equals(otherName);
+		}
+
+		public String toString() {
+			return turn;
+		}
+	}
+	```

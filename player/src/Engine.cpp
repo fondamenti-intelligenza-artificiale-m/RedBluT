@@ -3,11 +3,11 @@
 Engine::Engine(int threads) : threads(threads) {}
 
 void Engine::start(string color, string ip_referee) {
-    struct sockeraddr_in s{};
+    struct sockaddr_in s{};
     s.sin_family = AF_INET;
     for (char& c : color) c = std::toupper(static_cast<unsigned char>(c));
     s.sin_port = htons(color == "WHITE" ? whitePort : blackPort);
-    if (inet_pton(AF_INET, ip_referee, &s.sin_addr) <= 0) exit(EXIT_FAILURE);
+    if (inet_pton(AF_INET, ip_referee.c_str(), &s.sin_addr) <= 0) exit(EXIT_FAILURE);
     sd = socket(AF_INET, SOCK_STREAM, 0);
     if (sd < 0) exit(EXIT_FAILURE);
     if (connect(sd, (struct sockaddr*)&s, sizeof(s)) < 0) {
