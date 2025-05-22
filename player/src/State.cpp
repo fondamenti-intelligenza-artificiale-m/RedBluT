@@ -148,6 +148,13 @@ State State::moveWhite(int from, int to) const {
     return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, newZobristHash);
 }
 
+int State::getKingPosition() const {
+    for (int i = 0; i < 81; ++i) {
+        if (king.get(i)) return i;
+    }
+    return -1; // King not found
+}
+
 int State::evaluate() const {
     if (isWhiteWinner()) return 10000;
     if (isBlackWinner()) return -10000;
