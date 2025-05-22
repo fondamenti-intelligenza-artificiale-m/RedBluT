@@ -154,3 +154,25 @@ Bitboard& Bitboard::mulR(const Bitboard& other) {
     *this = this->mulV(other);
     return *this;
 }
+
+std::vector<int> Bitboard::toIndexVector() const {
+    std::vector<int> indices;
+
+    uint64_t l = lower;
+    int offset = 0;
+    while (l) {
+        int idx = __builtin_ctzll(l);
+        indices.push_back(offset + idx);
+        l &= l - 1;
+    }
+
+    uint64_t u = upper & ((1ULL << 17) - 1);
+    offset = 64;
+    while (u) {
+        int idx = __builtin_ctzll(u);
+        indices.push_back(offset + idx);
+        u &= u - 1;
+    }
+
+    return indices;
+}
