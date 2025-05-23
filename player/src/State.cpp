@@ -1,5 +1,13 @@
 #include "State.hpp"
 
+int State::directions[4] = {-9, -1, 1, 9};
+const Bitboard State::diagonals(0b100010,0b1000001000000000000000000000000000001000001000100010000000000);
+const Bitboard State::goal     (0b01100011010000000,0b1100000001000000000000000000000000000100000001100000001011000110);
+const Bitboard State::row3     (0,0b0000000000000000000000000000000000000111111111000000000000000000);
+const Bitboard State::row7     (0,0b0111111111000000000000000000000000000000000000000000000000000000);
+const Bitboard State::columnC  (0b10000000010, 0b0000000100000000100000000100000000100000000100000000100000000100);
+const Bitboard State::columnG  (0b100000000100000, 0b0001000000001000000001000000001000000001000000001000000001000000);
+
 State::State() :
     camps  (0b11100000001000, 0b0000000000100000001110000011100000001000000000000010000000111000),
     lookout(             0b0, 0b0000010000000010000001101100000010000000010000000000000000000000),
@@ -30,6 +38,7 @@ Bitboard State::getWhite() const { return white; }
 Bitboard State::getKing() const { return king; }
 Bitboard State::getPieces() const { return black.orV(white).orV(king); }
 
+/*
 Bitboard State::getLegalMoves(int from) const {
     return this->isWhiteTurn() ? this->getLegalMovesWhite(from) : this->getLegalMovesBlack(from);
 }
@@ -50,6 +59,23 @@ Bitboard State::getLegalMovesWhite(int from) const {
             .mulV(magicNumbersWhite[from])
             .rightV(magicShiftsWhite[from])
             .lower];
+}*/
+
+std::vector<int> State::getLegalMoves(int from) const {
+    std::vector<int> legalMoves;
+    Bitboard prohibited = getPieces().andV(this->isWhiteTurn() ? lookout.andV(castle) : camps);
+    for (int dir : directions) {
+        int to = from + dir;
+        while (
+            to >= 0 && to <= 80 && 
+            (((dir == 1 || dir == -1) && (from / 9 == to / 9)) || (dir == 9 || dir == -9))
+        ) {
+            if (prohibited.get(to)) break;
+            legalMoves.push_back(to);
+            to += dir;
+        }
+    }
+    return legalMoves;
 }
 
 State State::move(int from, int to) const {
@@ -145,7 +171,7 @@ State State::moveWhite(int from, int to) const {
         newBlack.clearR(maybeCaptured);
         //newZobristHash ^= zobristTable[0][maybeCaptured];
     }
-    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, newZobristHash);
+    return State(newBlack, newWhite, newKing, !whiteTurn, newWhiteWinner, blackWinner, 0);
 }
 
 int State::getKingPosition() const {
@@ -296,9 +322,11 @@ int State::kingMobility() const {
     int weight = -10;
     //int goalweight = 25;
     int kingPos = getKingPosition();
-    Bitboard movesKing = movesAloneWhite[kingPos];
+    result += getLegalMoves(kingPos).size()*weight;
+
+    /*Bitboard movesKing = movesAloneWhite[kingPos];
     int piecesInTrajectory = movesKing.andV(black).countOnes() + movesKing.andV(white).countOnes();
-    result += piecesInTrajectory*weight;
+    result += piecesInTrajectory*weight;*/
     //int goalInTrajectory = movesKing.andV(goal).countOnes();
     //result += goalInTrajectory*goalweight;
 

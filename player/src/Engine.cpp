@@ -1,7 +1,5 @@
 #include "Engine.hpp"
 
-Engine::Engine(int threads) : threads(threads) {}
-
 void Engine::start(std::string color, std::string ip_referee)
 {
     struct sockaddr_in s{};
@@ -84,8 +82,8 @@ int Engine::negaMax(const State &state, int depth, int alpha, int beta, int &bes
     {
         if (!pieces.get(from))
             continue;
-        Bitboard moves = state.getLegalMoves(from);
-        for (int to : moves.toIndexVector())
+        //Bitboard moves = state.getLegalMoves(from);
+        for (int to : state.getLegalMoves(from))
         {
             State child = state.move(from, to);
             int childFrom, childTo;
@@ -233,13 +231,13 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
 
         // PARSING JSON
         size_t boardPos = json.find("\"board\":");
-        if (boardPos == string::npos)
+        if (boardPos == std::string::npos)
             return;
 
         // Trova inizio e fine board
         size_t startBoard = json.find("[[", boardPos);
         size_t endBoard = json.find("]]", startBoard);
-        if (startBoard == string::npos || endBoard == string::npos)
+        if (startBoard == std::string::npos || endBoard == std::string::npos)
             return;
 
         // Puntatore che scorre le stringhe interne
@@ -251,15 +249,15 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
         {
             // Cerca inizio stringa cella: "
             size_t startQuote = json.find('\"', pos);
-            if (startQuote == string::npos || startQuote > endBoard)
+            if (startQuote == std::string::npos || startQuote > endBoard)
                 break;
 
             // Cerca fine stringa cella: "
             size_t endQuote = json.find('\"', startQuote + 1);
-            if (endQuote == string::npos || endQuote > endBoard)
+            if (endQuote == std::string::npos || endQuote > endBoard)
                 break;
 
-            string cell = json.substr(startQuote + 1, endQuote - startQuote - 1);
+            std::string cell = json.substr(startQuote + 1, endQuote - startQuote - 1);
 
             // Aggiorna bit nelle bitmap
             uint64_t mask = 1ULL << (bitIndex % 64);
@@ -290,11 +288,11 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
 
         // Cerca turn
         size_t turnPos = json.find("\"turn\":\"");
-        if (turnPos != string::npos)
+        if (turnPos != std::string::npos)
         {
             turnPos += 8;
             size_t turnEnd = json.find('\"', turnPos);
-            if (turnEnd != string::npos)
+            if (turnEnd != std::string::npos)
             {
                 turn = json.substr(turnPos, turnEnd - turnPos);
             }
@@ -321,26 +319,17 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
         // FIND MOVE
         this->playTurn(initialState, seconds);
 
-        int from_index = 22; // insert the index for the position you want to move from
-        int to_index = 23;   // insert the index for the position you want to move to
+        int from, to;
+        BestMove::getInstance().play(from, to);
+        initialState.move(from, to);
 
         // SEND MOVE
         char moveString[100];
         //"Turn: " + this.turn + " " + "Pawn from " + from + " to " + to;
-        sprintf(moveString, "{\"from\":\"%s\",\"to\":\"%s\",\"turn\":\"%s\"}\n", this->indexToCoordinate(from_index).c_str(), this->indexToCoordinate(to_index).c_str(), turn.c_str());
+        sprintf(moveString, "{\"from\":\"%s\",\"to\":\"%s\",\"turn\":\"%s\"}\n", this->indexToCoordinate(from).c_str(), this->indexToCoordinate(to).c_str(), turn.c_str());
         int stringLength = htonl(strlen(moveString));
         write(sd, &stringLength, sizeof(stringLength));
         write(sd, moveString, sizeof(char) * strlen(moveString));
     }
-
-    // leggo la stringa
-    // controllo se indica il fine partita e nel caso ritorno
-    // se no interpreto la stringa come un nuovo initial state
-    /*if (...) this->end();
-    State initialState; //ci dovrebbe essere un ascolto //gioca color chiaramente
-    this->playTurn(initialState, seconds);*/
-    // send(sd, from.c_str(), from.size(), 0);
-    // send(sd, to.c_str(), to.size(), 0);
-    // std::cout << "Mossa scelta: da " << from << " a " << to << std::endl;
     this->end();
 }

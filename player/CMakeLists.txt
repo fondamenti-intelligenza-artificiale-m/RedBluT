@@ -11,8 +11,8 @@ add_executable(player
     src/PositionHistory.cpp
     src/TranspositionTable.cpp
     src/Bitboard.cpp
-    src/MagicLookUpBlack.cpp
-    src/MagicLookUpWhite.cpp
+    #src/MagicLookUpBlack.cpp
+    #src/MagicLookUpWhite.cpp
     src/State.cpp
     src/Engine.cpp
     src/main.cpp
