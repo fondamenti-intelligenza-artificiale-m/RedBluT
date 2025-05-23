@@ -1,37 +1,27 @@
-#include "Bitboard.hpp"
+#include "Engine.hpp"
 
-int main() {
-    // Creazione di due oggetti Bitboard
-    /*Bitboard b1, b2;
+int main(int argc, char *argv[]) {
+    Engine engine;
+    if (argc != 4)
+    {
+        perror("Uso: ./RedBluT <color> <timer> <ip_referee>");
+        exit(EXIT_FAILURE);
+    }
 
-    // Impostiamo alcuni bit nelle bitboard
-    b1.setBit(5).setBit(10).setBit(20);
-    b2.setBit(10).setBit(20).setBit(30);
+    std::string color = argv[1];
+    int seconds;
 
-    // Stampa iniziale delle bitboard
-    std::cout << "Bitboard b1 (prima delle operazioni):" << std::endl;
-    b1.print();
-    std::cout << "Bitboard b2 (prima delle operazioni):" << std::endl;
-    b2.print();
+    try
+    {
+        seconds = std::stoi(argv[2]);
+    }
+    catch (const std::exception &e)
+    {
+        perror("Error: the timer must be an integer.");
+        exit(EXIT_FAILURE);
+    }
+    std::string ip_referee = argv[3];
 
-    // Eseguiamo una serie di operazioni bit a bit
-    std::cout << "\nEseguiamo NOT su b1:" << std::endl;
-    b1.notOp().print();
-
-    std::cout << "\nEseguiamo AND tra b1 e b2:" << std::endl;
-    b1.andOp(b2).print();
-
-    std::cout << "\nEseguiamo OR tra b1 e b2:" << std::endl;
-    b1.orOp(b2).print();
-
-    std::cout << "\nEseguiamo XOR tra b1 e b2:" << std::endl;
-    b1.xorOp(b2).print();
-
-    std::cout << "\nEseguiamo shiftLeft su b1 di 3 posizioni:" << std::endl;
-    b1.shiftLeft(3).print();
-
-    std::cout << "\nEseguiamo shiftRight su b1 di 2 posizioni:" << std::endl;
-    b1.shiftRight(2).print();*/
-
+    engine.go(color, seconds, ip_referee);
     return 0;
 }
