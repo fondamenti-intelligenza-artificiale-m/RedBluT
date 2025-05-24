@@ -63,7 +63,7 @@ Bitboard State::getLegalMovesWhite(int from) const {
 
 std::vector<int> State::getLegalMoves(int from) const {
     std::vector<int> legalMoves;
-    Bitboard prohibited = getPieces().orV(this->isWhiteTurn() ? camps.orV(castle) : lookout.orV(castle));
+    Bitboard prohibited = getPieces().orV(camps.orV(castle));
     for (int dir : directions) {
         int to = from + dir;
         while (
@@ -191,13 +191,14 @@ int State::evaluate() const {
     result += countPieces();
     result += checkFreeWay();
     result += kingMobility();
-    return 0; 
+
+    return result; 
 }
 
 
 // Valutare se diagonale completa
 int State::checkDiagonal() const {
-    const int weight = - 100;
+    const int weight = -100;
     int count = black.andV(diagonals).countOnes();
     return count * weight;
 }
@@ -288,24 +289,24 @@ int State::checkFreeWay() const{
     int result = 0;
     bool found = false;
 
-    if(black.andV(white).andV(row3).isEmpty()){
+    if(black.orV(white).andV(row3).isEmpty()){
         result += 30;
-        if(king.andV(row3).isEmpty())
+        if(!king.andV(row3).isEmpty())
             result += 1000;
     }
-    if(black.andV(white).andV(row7).isEmpty()){
+    if(black.orV(white).andV(row7).isEmpty()){
         result += 30;
-        if(!found && king.andV(row7).isEmpty())
+        if(!found && !king.andV(row7).isEmpty())
             result += 1000;
     }
-    if(black.andV(white).andV(columnC).isEmpty()){
+    if(black.orV(white).andV(columnC).isEmpty()){
         result += 30;
-        if(!found && king.andV(columnC).isEmpty())
+        if(!found && !king.andV(columnC).isEmpty())
             result += 1000;
     }
-    if(black.andV(white).andV(columnG).isEmpty()){
+    if(black.orV(white).andV(columnG).isEmpty()){
         result += 30;
-        if(!found && king.andV(columnG).isEmpty())
+        if(!found && !king.andV(columnG).isEmpty())
             result += 1000;
     }
     return result;
@@ -319,7 +320,7 @@ int State::countPieces() const{
 // Lasciamo commentato il check sul goal
 int State::kingMobility() const {
     int result = 0;
-    int weight = -10;
+    int weight = +10;
     //int goalweight = 25;
     int kingPos = getKingPosition();
     result += getLegalMoves(kingPos).size()*weight;

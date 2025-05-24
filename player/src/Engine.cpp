@@ -36,6 +36,7 @@ void Engine::start(std::string color, std::string ip_referee)
 
 int Engine::negaMax(const State &state, int depth, int alpha, int beta, int &bestFrom, int &bestTo)
 {
+    pthread_testcancel();
     if (depth == 0)
         return state.evaluate();
     if (state.isWhiteWinner())
@@ -118,15 +119,13 @@ int Engine::negaMax(const State &state, int depth, int alpha, int beta, int &bes
 int Engine::negaMaxAspirationWindow(const State &state, int depth, int &bestFrom, int &bestTo)
 {
     int guess = state.evaluate();
-    int window = 300;
+    int window = 1000;
     int alpha = guess - window;
     int beta = guess + window;
     while (true)
     {
         int newFrom = -3, newTo = -3;
         int score = negaMax(state, depth, alpha, beta, newFrom, newTo);
-        printf("NegaMax Aspiration Window: depth=%d, alpha=%d, beta=%d, guess=%d\n", depth, alpha, beta, guess);
-        printf("Score: %d\n", score);
         if (score <= alpha)
             alpha -= window;
         else if (score >= beta)
@@ -135,10 +134,9 @@ int Engine::negaMaxAspirationWindow(const State &state, int depth, int &bestFrom
         {
             bestFrom = newFrom;
             bestTo = newTo;
-            printf("Best Move (from-to): %d to %d\n", newFrom, newTo);
             return score;
         }
-        window += 200;
+        window += 500;
     }
 }
 
@@ -151,18 +149,16 @@ void *Engine::iterativeDeepening(void *args)
     Engine *engine = tas->engine;
     const State &initialState = *tas->state;
     int id = tas->id;
-    
+
     int depth = 1;
     while (true)
     {
         int from = -4, to = -4;
         engine->negaMaxAspirationWindow(initialState, depth++, from, to);
-        printf("Iterativedeepening - after negamaxASPWIND -> from: %d, to: %d\n", from, to);
         pthread_barrier_wait(&engine->barrier);
         if (pthread_self() == engine->searchers[id])
             BestMove::getInstance().propose(from, to);
         pthread_barrier_wait(&engine->barrier);
-        pthread_testcancel();
     }
     return nullptr;
 }
@@ -182,17 +178,13 @@ void Engine::playTurn(const State &initialSatate, int seconds)
     sleep(seconds - 2);
     for (int t = 0; t < 1; t++)
         pthread_cancel(searchers[t]);
-    printf("Threads cancelled\n");
     for (int t = 0; t < 1; t++)
         pthread_join(searchers[t], NULL);
-    printf("Threads join\n");
     delete[] tas;
-    printf("Before Barrier\n");
     pthread_barrier_destroy(&barrier);
-    printf("Barrier destroyed\n");
     // int from, to;
     // BestMove::getInstance().play(from, to);
-    //PositionHistory::getInstance().push(initialSatate.move(from, to).getZobristHash());
+    // PositionHistory::getInstance().push(initialSatate.move(from, to).getZobristHash());
 }
 
 std::string Engine::indexToCoordinate(int index)
@@ -316,7 +308,8 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
             }
             if (turn == "BLACK")
                 blackTurn = true;
-            if (turn == "WHITE"){
+            if (turn == "WHITE")
+            {
                 whiteTurn = true;
             }
             if (turn == "BLACKWIN")
@@ -327,7 +320,8 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
                 draw = true;
         }
 
-        if(turn != color){
+        if (turn != color)
+        {
             continue;
         }
 
@@ -338,7 +332,7 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
 
         // CREATE INITIAL STATE
         State initialState(white, black, king, whiteTurn, whiteWin, blackWin, 0);
-        printf("Initial State \n");
+        printf("InitialState evaluated: %d\n", initialState.evaluate());
 
         // FIND MOVE
         this->playTurn(initialState, seconds);
@@ -347,13 +341,14 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
         BestMove::getInstance().play(from, to);
         initialState.move(from, to);
 
+        printf("Move evaluated: %d\n", initialState.move(from, to).evaluate());
+
         printf("From: %d To: %d\n", from, to);
         // SEND MOVE
         char moveString[100];
         //"Turn: " + this.turn + " " + "Pawn from " + from + " to " + to;
         sprintf(moveString, "{\"from\":\"%s\",\"to\":\"%s\",\"turn\":\"%s\"}\n", this->indexToCoordinate(from).c_str(), this->indexToCoordinate(to).c_str(), turn.c_str());
         int stringLength = htonl(strlen(moveString));
-        printf("Move to send: %s\n", moveString);
         write(sd, &stringLength, sizeof(stringLength));
         write(sd, moveString, sizeof(char) * strlen(moveString));
         printf("Move sent: %s\n", moveString);
