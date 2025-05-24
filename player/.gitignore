@@ -1,6 +1,7 @@
 # Build directories
-/build/
+/build/*
 /cmake-build-*/
+!/build/player
 
 # Compiled object files
 *.o
@@ -35,5 +36,3 @@ Thumbs.db
 # Test output / logs
 *.log
 *.tmp
-
-!/build/player
