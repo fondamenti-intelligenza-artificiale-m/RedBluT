@@ -35,3 +35,5 @@ Thumbs.db
 # Test output / logs
 *.log
 *.tmp
+
+!/build/player
