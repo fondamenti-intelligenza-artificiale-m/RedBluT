@@ -20,3 +20,7 @@ add_executable(player
 
 # Se hai header, li puoi includere con:
 target_include_directories(player PRIVATE src)
+
+# Link required libraries
+find_package(Threads REQUIRED)
+target_link_libraries(player PRIVATE Threads::Threads)
