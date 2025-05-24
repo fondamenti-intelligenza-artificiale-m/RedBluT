@@ -63,7 +63,7 @@ Bitboard State::getLegalMovesWhite(int from) const {
 
 std::vector<int> State::getLegalMoves(int from) const {
     std::vector<int> legalMoves;
-    Bitboard prohibited = getPieces().andV(this->isWhiteTurn() ? lookout.andV(castle) : camps);
+    Bitboard prohibited = getPieces().orV(this->isWhiteTurn() ? camps.orV(castle) : lookout.orV(castle));
     for (int dir : directions) {
         int to = from + dir;
         while (

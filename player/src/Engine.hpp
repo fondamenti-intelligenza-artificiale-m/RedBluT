@@ -34,7 +34,7 @@ private:
     int whitePort = 5800;
     int blackPort = 5801;
     int sd;
-    pthread_t searchers [3];
+    pthread_t searchers [1];
     pthread_barrier_t barrier;
     void iterativeDeepening(const State& initialState, int& bestFrom, int& bestTo);
     void negaMaxAspirationWindow(const State& state, int depth, int alpha, int beta,

@@ -121,11 +121,12 @@ int Engine::negaMaxAspirationWindow(const State &state, int depth, int &bestFrom
     int window = 300;
     int alpha = guess - window;
     int beta = guess + window;
-    printf("Guess: %d\n", guess);
     while (true)
     {
         int newFrom = -3, newTo = -3;
         int score = negaMax(state, depth, alpha, beta, newFrom, newTo);
+        printf("NegaMax Aspiration Window: depth=%d, alpha=%d, beta=%d, guess=%d\n", depth, alpha, beta, guess);
+        printf("Score: %d\n", score);
         if (score <= alpha)
             alpha -= window;
         else if (score >= beta)
@@ -134,6 +135,7 @@ int Engine::negaMaxAspirationWindow(const State &state, int depth, int &bestFrom
         {
             bestFrom = newFrom;
             bestTo = newTo;
+            printf("Best Move (from-to): %d to %d\n", newFrom, newTo);
             return score;
         }
         window += 200;
@@ -155,6 +157,7 @@ void *Engine::iterativeDeepening(void *args)
     {
         int from = -4, to = -4;
         engine->negaMaxAspirationWindow(initialState, depth++, from, to);
+        printf("Iterativedeepening - after negamaxASPWIND -> from: %d, to: %d\n", from, to);
         pthread_barrier_wait(&engine->barrier);
         if (pthread_self() == engine->searchers[id])
             BestMove::getInstance().propose(from, to);
@@ -167,9 +170,9 @@ void *Engine::iterativeDeepening(void *args)
 void Engine::playTurn(const State &initialSatate, int seconds)
 {
     // PositionHistory::getInstance().push(initialSatate.getZobristHash());
-    pthread_barrier_init(&barrier, NULL, 3);
-    ThreadArgs *tas = new ThreadArgs[3];
-    for (int t = 0; t < 3; t++)
+    pthread_barrier_init(&barrier, NULL, 1);
+    ThreadArgs *tas = new ThreadArgs[1];
+    for (int t = 0; t < 1; t++)
     {
         tas[t].id = t;
         tas[t].state = &initialSatate;
@@ -177,18 +180,18 @@ void Engine::playTurn(const State &initialSatate, int seconds)
         pthread_create(&searchers[t], NULL, Engine::iterativeDeepening, &tas[t]);
     }
     sleep(seconds - 2);
-    for (int t = 0; t < 3; t++)
+    for (int t = 0; t < 1; t++)
         pthread_cancel(searchers[t]);
     printf("Threads cancelled\n");
-    for (int t = 0; t < 3; t++)
+    for (int t = 0; t < 1; t++)
         pthread_join(searchers[t], NULL);
     printf("Threads join\n");
     delete[] tas;
     printf("Before Barrier\n");
     pthread_barrier_destroy(&barrier);
     printf("Barrier destroyed\n");
-    int from, to;
-    BestMove::getInstance().play(from, to);
+    // int from, to;
+    // BestMove::getInstance().play(from, to);
     //PositionHistory::getInstance().push(initialSatate.move(from, to).getZobristHash());
 }
 
@@ -313,8 +316,9 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
             }
             if (turn == "BLACK")
                 blackTurn = true;
-            if (turn == "WHITE")
+            if (turn == "WHITE"){
                 whiteTurn = true;
+            }
             if (turn == "BLACKWIN")
                 blackWin = true;
             if (turn == "WHITEWIN")
@@ -323,10 +327,14 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
                 draw = true;
         }
 
+        if(turn != color){
+            continue;
+        }
+
         // CREATE BITBOARDS
-        Bitboard white(whiteBitmap_low, whiteBitmap_high);
-        Bitboard black(blackBitmap_low, blackBitmap_high);
-        Bitboard king(kingBitmap_low, kingBitmap_high);
+        Bitboard white(whiteBitmap_high, whiteBitmap_low);
+        Bitboard black(blackBitmap_high, blackBitmap_low);
+        Bitboard king(kingBitmap_high, kingBitmap_low);
 
         // CREATE INITIAL STATE
         State initialState(white, black, king, whiteTurn, whiteWin, blackWin, 0);
