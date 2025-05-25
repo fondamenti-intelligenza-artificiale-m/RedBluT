@@ -6,8 +6,6 @@ void Engine::start(std::string color, std::string ip_referee)
 {
     struct sockaddr_in s{};
     s.sin_family = AF_INET;
-    for (char &c : color)
-        c = std::toupper(static_cast<unsigned char>(c));
     s.sin_port = htons(color == "WHITE" ? whitePort : blackPort);
     if (inet_pton(AF_INET, ip_referee.c_str(), &s.sin_addr) <= 0)
         exit(EXIT_FAILURE);
@@ -226,7 +224,7 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
 
         buffer[bytesRead] = '\0';
         json = buffer;
-        // printf("JSON from Server: %s\n", json.c_str());
+        printf("JSON from Server: %s\n", json.c_str());
 
         uint64_t whiteBitmap_low = 0ULL;
         uint64_t whiteBitmap_high = 0ULL;
@@ -353,7 +351,7 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
         int stringLength = htonl(strlen(moveString));
         write(sd, &stringLength, sizeof(stringLength));
         write(sd, moveString, sizeof(char) * strlen(moveString));
-        // printf("Move sent: %s\n", moveString);
+        printf("Move sent: %s\n", moveString);
     }
     this->end();
 }

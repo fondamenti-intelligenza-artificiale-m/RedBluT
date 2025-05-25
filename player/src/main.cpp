@@ -9,6 +9,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::string color = argv[1];
+    for (char &c : color)
+        c = std::toupper(static_cast<unsigned char>(c));
+    printf("Color: %s\n", color.c_str());
     int seconds;
 
     try
