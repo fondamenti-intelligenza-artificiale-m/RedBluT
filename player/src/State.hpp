@@ -7,6 +7,7 @@
 //#include "MagicLookUpWhite.hpp"
 #include "PositionHistory.hpp"
 #include <vector>
+#include <stdio.h>
 
 class State {
 public:

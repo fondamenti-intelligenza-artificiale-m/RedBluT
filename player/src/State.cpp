@@ -121,17 +121,17 @@ State State::moveBlack(int from, int to) const {
         int maybeCaptured = to + directions[dir];
         int nedded = maybeCaptured + directions[dir];
         if (nedded < 0 || nedded > 80) continue;
-        if (!(newWhite.orV(newKing).get(maybeCaptured) & 1)) continue;
-        if (!(newBlack.orV(camps).orV(castle).get(nedded) & 1)) continue;
+        if (!(newWhite.orV(newKing).get(maybeCaptured))) continue;
+        if (!(newBlack.orV(camps).orV(castle).get(nedded))) continue;
         if ((dir == -1 || dir == 1)) {
             if (!(to / 9 == maybeCaptured / 9 && to / 9 == nedded / 9)) continue;
         } else {
             if (!(to % 9 == maybeCaptured % 9 && to % 9 == nedded % 9)) continue;
         }
-        if (newWhite.get(maybeCaptured) & 1) {
+        if (newWhite.get(maybeCaptured)) {
             newWhite.clearR(maybeCaptured);
             //newZobristHash ^= zobristTable[1][maybeCaptured];
-        } else if (newKing.get(maybeCaptured) & 1) {
+        } else if (newKing.get(maybeCaptured)) {
             newKing.clearR(maybeCaptured);
             //newZobristHash ^= zobristTable[2][40];
         }
@@ -145,12 +145,15 @@ State State::moveWhite(int from, int to) const {
     Bitboard newKing = king;
     bool newWhiteWinner = false;
     //uint64_t newZobristHash = zobristHash ^ zobristWhiteToMove;
-    if (king.get(from) & 1) {
+    if (king.get(from)) {
         newKing.clearR(from);
         //newZobristHash ^= zobristTable[2][from];
         newKing.setR(to);
         //newZobristHash ^= zobristTable[2][to];
-        if ((to / 9 == 0) || (to / 9 == 8) || (to % 9 == 0) || (to % 9 == 8)) newWhiteWinner = true;
+        if ((to / 9 == 0) || (to / 9 == 8) || (to % 9 == 0) || (to % 9 == 8)) 
+        {
+            newWhiteWinner = true;
+        }
     } else {
         newWhite.clearR(from);
         //newZobristHash ^= zobristTable[1][from];
@@ -161,8 +164,8 @@ State State::moveWhite(int from, int to) const {
         int maybeCaptured = to + directions[dir];
         int nedded = maybeCaptured + directions[dir];
         if (nedded < 0 || nedded > 80) continue;
-        if (!(newBlack.get(maybeCaptured) & 1)) continue;
-        if (!(white.orV(king).orV(camps).orV(castle).get(nedded) & 1)) continue;
+        if (!(newBlack.get(maybeCaptured))) continue;
+        if (!(white.orV(king).orV(camps).orV(castle).get(nedded))) continue;
         if ((dir == -1 || dir == 1)) {
             if (!(to / 9 == maybeCaptured / 9 && to / 9 == nedded / 9)) continue;
         } else {
@@ -320,7 +323,7 @@ int State::countPieces() const{
 // Lasciamo commentato il check sul goal
 int State::kingMobility() const {
     int result = 0;
-    int weight = +10;
+    int weight = +50;
     //int goalweight = 25;
     int kingPos = getKingPosition();
     result += getLegalMoves(kingPos).size()*weight;

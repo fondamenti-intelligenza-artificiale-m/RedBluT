@@ -37,12 +37,8 @@ void Engine::start(std::string color, std::string ip_referee)
 int Engine::negaMax(const State &state, int depth, int alpha, int beta, int &bestFrom, int &bestTo)
 {
     pthread_testcancel();
-    if (depth == 0)
+    if (depth == 0 || state.isWhiteWinner() || state.isBlackWinner())
         return state.evaluate();
-    if (state.isWhiteWinner())
-        return 10000;
-    if (state.isBlackWinner())
-        return -10000;
     PositionHistory &ph = PositionHistory::getInstance();
     uint64_t hash = state.getZobristHash();
     if (ph.contains(hash))
@@ -151,14 +147,20 @@ void *Engine::iterativeDeepening(void *args)
     int id = tas->id;
 
     int depth = 1;
+    bool checkIsNextMove = false;
     while (true)
     {
         int from = -4, to = -4;
-        engine->negaMaxAspirationWindow(initialState, depth++, from, to);
+        int score = engine->negaMaxAspirationWindow(initialState, depth++, from, to);
         pthread_barrier_wait(&engine->barrier);
         if (pthread_self() == engine->searchers[id])
             BestMove::getInstance().propose(from, to);
         pthread_barrier_wait(&engine->barrier);
+        if(!checkIsNextMove && score >= 9000 && initialState.isWhiteTurn()) {
+            return nullptr; // Stop searching if white wins
+        }
+        checkIsNextMove = true;
+
     }
     return nullptr;
 }
@@ -224,7 +226,7 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
 
         buffer[bytesRead] = '\0';
         json = buffer;
-        printf("JSON from Server: %s\n", json.c_str());
+        // printf("JSON from Server: %s\n", json.c_str());
 
         uint64_t whiteBitmap_low = 0ULL;
         uint64_t whiteBitmap_high = 0ULL;
@@ -332,7 +334,7 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
 
         // CREATE INITIAL STATE
         State initialState(white, black, king, whiteTurn, whiteWin, blackWin, 0);
-        printf("InitialState evaluated: %d\n", initialState.evaluate());
+        // printf("InitialState evaluated: %d\n", initialState.evaluate());
 
         // FIND MOVE
         this->playTurn(initialState, seconds);
@@ -341,9 +343,9 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
         BestMove::getInstance().play(from, to);
         initialState.move(from, to);
 
-        printf("Move evaluated: %d\n", initialState.move(from, to).evaluate());
+        // printf("Move evaluated: %d\n", initialState.move(from, to).evaluate());
 
-        printf("From: %d To: %d\n", from, to);
+        // printf("From: %d To: %d\n", from, to);
         // SEND MOVE
         char moveString[100];
         //"Turn: " + this.turn + " " + "Pawn from " + from + " to " + to;
@@ -351,7 +353,7 @@ void Engine::go(std::string color, int seconds, std::string ip_referee)
         int stringLength = htonl(strlen(moveString));
         write(sd, &stringLength, sizeof(stringLength));
         write(sd, moveString, sizeof(char) * strlen(moveString));
-        printf("Move sent: %s\n", moveString);
+        // printf("Move sent: %s\n", moveString);
     }
     this->end();
 }
